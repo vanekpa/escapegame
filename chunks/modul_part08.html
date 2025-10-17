@@ -1,0 +1,78 @@
+ssets.colors : ["red","orange","yellow","green","blue","purple","pink","brown"]).slice(0,8);
+            const [seq, setSeq] = useState([]);
+            const normalizedAnswer = (lock.answer || []).map(s => s.toLowerCase());
+            const normalizedSeq = seq.map(s => s.toLowerCase());
+            const [showStatus, setShowStatus] = useState(false);
+
+            const submit = () => {
+                setShowStatus(true);
+                onDone(JSON.stringify(normalizedSeq) === JSON.stringify(normalizedAnswer));
+            };
+            useEnterTo(submit);
+
+            return (
+                <div className="space-y-4">
+                    <Slots
+                        values={Array(len).fill(null).map((_, i) => seq[i] ?? null)}
+                        length={len}
+                        render={(c) => c ? <span className="w-10 h-10 rounded-xl inline-block" style={{backgroundColor: c}} /> : ""}
+                        status={showStatus ? statusByPosition(normalizedSeq, normalizedAnswer) : []}
+                    />
+                    <div className="flex flex-wrap justify-center gap-4 mt-2">
+                        {palette.map(c => (
+                            <button key={c} onClick={() => seq.length < len && setSeq(s => [...s, c])}
+                                className="w-16 h-16 rounded-2xl bg-white p-1 shadow hover:scale-105 transition"
+                                aria-label={c}>
+                                <span className="block w-full h-full rounded-xl" style={{backgroundColor: c}} />
+                            </button>
+                        ))}
+                    </div>
+                    <ActionBar>
+                        <ConfirmResetButton onConfirm={()=>{setSeq([]);setShowStatus(false);}} />
+                        <button onClick={submit} disabled={seq.length!==len}
+                            className="px-6 py-3 rounded-xl bg-emerald-500 disabled:bg-gray-400 text-white font-semibold shadow">✓</button>
+                    </ActionBar>
+                </div>
+            );
+        }
+
+        // Shape aliases for old JSON compatibility
+        const SHAPE_ALIASES = {
+            "◯":"circle", "●":"circle",
+            "■":"square", "□":"square",
+            "▲":"triangle", "△":"triangle",
+            "★":"star",
+            "❤":"heart", "♥":"heart",
+            "◆":"diamond", "◇":"diamond"
+        };
+
+        // SVG shape library (simple, child-friendly)
+        const SHAPE_SVGS = {
+            circle:  (<circle cx="24" cy="24" r="18" />),
+            square:  (<rect x="8" y="8" width="32" height="32" rx="6" ry="6" />),
+            triangle:(<path d="M24 6 L42 40 H6 Z" />),
+            star:    (<path d="M24 5 l6.9 12.9 14.1 2.1-10.2 9.9 2.4 14.1L24 38.6 8.8 44l2.4-14.1L1 20 15.1 17.9z" />),
+            heart:   (<path d="M24 42s-14-8.6-14-18c0-5.5 4.5-10 10-10 3 0 5.7 1.3 7.5 3.5C29.3 15.3 32 14 35 14c5.5 0 10 4.5 10 10 0 9.4-14 18-14 18z" />),
+            diamond: (<path d="M24 4 L44 24 24 44 4 24 Z" />),
+            hex:     (<path d="M12 8 L36 8 L44 24 L36 40 L12 40 L4 24 Z" />),
+            clover:  (<path d="M24 22c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z M24 22c4.4 0 8-3.6 8-8s-3.6-8-8-8-8 3.6-8 8 3.6 8 8 8z M24 22c0-4.4-3.6-8-8-8s-8 3.6-8 8 3.6 8 8 8 8-3.6 8-8z M24 22c0 4.4-3.6 8-8 8s-8-3.6-8-8 3.6-8 8-8 8 3.6 8 8z M24 22v18" />),
+        };
+
+        // Default shapes when not in assets
+        const SHAPES_DEFAULT = ["◯","■","▲","★","❤","◆","hex","clover"];
+
+        function PrettyShape({ s }) {
+            const key = SHAPE_ALIASES[s] || s; // convert "◯" -> "circle" etc.
+            const svg = SHAPE_SVGS[key];
+            if (!svg) {
+                // fallback: original character
+                return <span className="text-[28px] sm:text-[32px]">{s}</span>;
+            }
+            return (
+                <svg viewBox="0 0 48 48" className="w-8 h-8 sm:w-10 sm:h-10" fill="#111">
+                    {svg}
+                </svg>
+            );
+        }
+
+        // S

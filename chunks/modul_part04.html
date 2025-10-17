@@ -1,0 +1,92 @@
+ock size={dockSize}>
+                            {page?.type==="lock" && (
+                                <LockRouter lock={page.lock} assets={assets} info={page.info}
+                                            onDone={onResolve} solved={solved} />
+                            )}
+                        </BottomDock>
+                    )}
+                </div>
+            );
+        }
+
+        // Confirm Reset Button Component
+        function ConfirmResetButton({onConfirm,className=""}) {
+          const [armed,setArmed]=React.useState(false);
+          React.useEffect(()=>{ if(!armed)return; const id=setTimeout(()=>setArmed(false),1500); return()=>clearTimeout(id);},[armed]);
+          return (
+            <button onClick={()=>armed?onConfirm():setArmed(true)}
+              className={`${className} px-5 py-3 rounded-xl shadow ${armed?"bg-rose-500 text-white":"bg-slate-300 text-slate-900"}`}>
+              {armed?"Klikni znovu":"Reset"}
+            </button>
+          );
+        }
+
+        // ZoomHint Component
+        function ZoomHint({ title="Text", content="" }) {
+          const [open,setOpen]=React.useState(false);
+          return (<>
+            <button onClick={()=>setOpen(true)} title="Zvětšit"
+              className="ml-2 inline-flex items-center justify-center w-7 h-7 rounded-md bg-slate-200 text-slate-700 shadow">🔎</button>
+            {open&&(
+              <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm grid place-items-center p-4">
+                <div className="w-full max-w-[720px] bg-white rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="px-4 py-3 border-b flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+                    <button onClick={()=>setOpen(false)} className="px-3 py-1.5 rounded-md bg-slate-100 text-slate-700 text-sm">Zavřít</button>
+                  </div>
+                  <div className="p-4 max-h-[70vh] overflow-auto text-[20px] leading-8 text-slate-800">{content}</div>
+                </div>
+              </div>)}
+          </>);
+        }
+
+        // ActionBar Component
+        function ActionBar({children}) {
+          return (
+            <div className="sticky bottom-0 left-0 right-0 mt-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]
+                            bg-gradient-to-t from-white/95 to-white/0 backdrop-blur flex justify-center">
+              <div className="flex gap-3">{children}</div>
+            </div>
+          );
+        }
+
+        // Helper functions
+        function shuffle(arr){
+            const a = arr.slice();
+            for (let i=a.length-1;i>0;i--){
+                const j = Math.floor(Math.random()*(i+1));
+                [a[i],a[j]] = [a[j],a[i]];
+            }
+            return a;
+        }
+
+        const useEnterTo = (fn) => {
+            React.useEffect(() => {
+                const h = (e) => { if (e.key === "Enter") fn(); };
+                window.addEventListener("keydown", h);
+                return () => window.removeEventListener("keydown", h);
+            }, [fn]);
+        };
+
+        const useEnter = (cb) => React.useCallback((e)=>{ if(e.key==="Enter") cb(); },[cb]);
+
+        function onEnter(handler) {
+            return (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    handler();
+                }
+            };
+        }
+
+        const statusByPosition = (given=[], answer=[]) =>
+            answer.map((a,i) => (given[i] == null ? null : (given[i] === a ? "ok" : "bad")));
+
+        // Lock Router Component
+        function LockRouter({ lock, assets, info, onDone, solved }) {
+            const L = lock || {};
+            
+            if (solved) {
+                return (
+                    <div className="mx-auto max-w-[760px] text-center text-slate-800">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600/90 shadow 

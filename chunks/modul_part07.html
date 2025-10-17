@@ -1,0 +1,92 @@
+bg-emerald-50"
+                                : h === "bad"
+                                ? "ring-2 ring-rose-400 bg-rose-50"
+                                : "ring-1 ring-black/10";
+                        return (
+                            <div
+                                key={i}
+                                className={
+                                    "w-12 h-14 grid place-items-center rounded-xl bg-white text-slate-900 text-xl font-bold shadow " +
+                                    ring
+                                }
+                            >
+                                {render ? render(v) : v ?? ""}
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        // Numeric Lock Component
+        function NumericLock({ lock, onDone }) {
+            const len = lock.input?.length ?? 4;
+            const [val, setVal] = useState("");
+            const [showStatus, setShowStatus] = useState(false);
+            
+            const submit = () => {
+                setShowStatus(true);
+                onDone(val === String(lock.answer ?? ""));
+                // NEmažeme hodnotu – necháme čísla zůstat, aby šlo vidět ok/špatně
+            };
+            
+            useEnterTo(submit);
+            
+            return (
+                <div className="space-y-3">
+                    <Slots 
+                        values={val.split("")} 
+                        length={len} 
+                        status={showStatus ? statusByPosition(val.split(""), String(lock.answer ?? "").split("")) : []}
+                    />
+                    <SoftKeyboard variant="numeric" onKey={(d) => val.length < len && setVal(v => v + d)} />
+                    <ActionBar>
+                        <button onClick={()=>{setVal(v=>v.slice(0,-1));setShowStatus(false);}}
+                            className="px-5 py-3 rounded-xl bg-slate-300 text-slate-900 font-semibold shadow">⌫ Zpět</button>
+                        <ConfirmResetButton onConfirm={()=>{setVal("");setShowStatus(false);}} />
+                        <button onClick={submit} disabled={val.length!==len}
+                            className="px-6 py-3 rounded-xl bg-emerald-500 disabled:bg-gray-400 text-white font-semibold shadow">✓</button>
+                    </ActionBar>
+                </div>
+            );
+        }
+
+        // Arrows Lock Component
+        function ArrowsLock({ lock, onDone }) {
+            const len = lock.input?.length ?? (lock.answer?.length || 4);
+            const [seq, setSeq] = useState([]);
+            const [showStatus, setShowStatus] = useState(false);
+
+            const submit = () => {
+                setShowStatus(true);
+                onDone(JSON.stringify(seq) === JSON.stringify(lock.answer || []));
+            };
+            
+            useEnterTo(submit);
+
+            return (
+                <div className="space-y-3">
+                    <Slots 
+                        values={seq} 
+                        length={len} 
+                        status={showStatus ? statusByPosition(seq, lock.answer || []) : []}
+                    />
+
+                    <SoftKeyboard
+                        variant="arrows"
+                        onKey={(k) => seq.length < len && setSeq((s) => [...s, k])}
+                    />
+
+                    <ActionBar>
+                        <ConfirmResetButton onConfirm={()=>{setSeq([]);setShowStatus(false);}} />
+                        <button onClick={submit} disabled={seq.length!==len}
+                            className="px-6 py-3 rounded-xl bg-emerald-500 disabled:bg-gray-400 text-white font-semibold shadow">✓</button>
+                    </ActionBar>
+                </div>
+            );
+        }
+
+        // Colors Lock Component
+        function ColorsLock({ lock, assets, onDone }) {
+            const len = lock.input?.length ?? lock.answer?.length ?? 4;
+            const palette = (assets?.colors?.length ? a

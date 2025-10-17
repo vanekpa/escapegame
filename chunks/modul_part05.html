@@ -1,0 +1,78 @@
+text-white">
+                            <span>✅</span><span className="font-semibold">Odemčeno</span>
+                        </div>
+                        <div className="mt-3">
+                            <button onClick={() => onDone(true)} className="px-6 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 font-semibold text-white">
+                                Pokračovat
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+            return (
+                <div className="mx-auto max-w-[760px]">
+                    <div className="text-slate-800">
+                        {/* HLAVIČKA + LUPA */}
+                        <div className="flex items-center justify-center gap-2 mb-1 text-amber-600">
+                            <span>🔒</span>
+                            <h2 className="text-base sm:text-lg font-semibold">
+                                {info?.title || "Zámek"}
+                            </h2>
+                            <ZoomHint title={info?.title||"Text"} content={(info?.description||info?.text||L.hint||"").toString()} />
+                        </div>
+                        
+                        {L.hint && (
+                            <div className="mb-2 text-[11px] sm:text-xs tracking-wide text-slate-700 bg-amber-100/80 rounded-md px-3 py-1.5">
+                                💡 {L.hint}
+                            </div>
+                        )}
+
+                        {/* konkrétní vstup */}
+                        {L.mode === "numeric" && <NumericLock lock={L} onDone={onDone} />}
+                        {L.mode === "text" && <TextLock lock={L} onDone={onDone} />}
+                        {L.mode === "arrows" && <ArrowsLock lock={L} onDone={onDone} />}
+                        {L.mode === "colors" && <ColorsLock lock={L} assets={assets} onDone={onDone} />}
+                        {L.mode === "shapes" && <ShapesLock lock={L} assets={assets} onDone={onDone} />}
+                        {L.mode === "cryptex" && <CryptexLock lock={L} assets={{ keyboards: (assets?.keyboards||{}), ...assets }} onDone={onDone} />}
+                        {L.mode === "quiz" && <QuizLock lock={L} onDone={onDone} />}
+                        {(!L.mode || L.mode === "default") && <TextLock lock={L} onDone={onDone} />}
+                    </div>
+                </div>
+            );
+        }
+
+        // Text Lock Component
+        function TextLock({ lock, onDone, readonly = false, preset = "" }) {
+            const [val, setVal] = useState("");
+            
+            function submit() {
+                const answer = String(lock.answer ?? "");
+                const caseSensitive = !!lock.input?.case_sensitive;
+                const isCorrect = caseSensitive ? 
+                    val === answer : 
+                    val.toUpperCase() === answer.toUpperCase();
+                onDone(isCorrect);
+                setVal("");
+            }
+            
+            function handleKeyPress(e) {
+                if (e.key === 'Enter') {
+                    submit();
+                }
+            }
+            
+            return (
+                <div className="space-y-3">
+                    <input 
+                        value={val} 
+                        onChange={e => setVal(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        className="w-full p-3 rounded-xl bg-white text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow" 
+                        placeholder={lock.input?.placeholder || "Zadej odpověď"}
+                        autoFocus
+                    />
+                    <div className="flex justify-center">
+                        <button 
+                            onClick={submit} 
+                            disabled={!val.trim()}
+                            className="px-6 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-500 disabled:curso

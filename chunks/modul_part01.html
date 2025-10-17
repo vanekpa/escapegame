@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Game</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --bg-grad: radial-gradient(40% 45% at 12% 10%, #FFEDD5 0%, rgba(255,237,213,0) 60%),
+                       radial-gradient(35% 40% at 88% 12%, #E9D5FF 0%, rgba(233,213,255,0) 60%),
+                       radial-gradient(55% 55% at 50% 95%, #BAE6FD 0%, rgba(186,230,253,0) 60%),
+                       linear-gradient(180deg, #FDF2F8 0%, #EEF2FF 100%);
+        }
+        html,body{ height:100% }
+        body{
+            box-sizing:border-box;
+            font-family:"Fredoka", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-grad) fixed;
+        }
+        @keyframes fadein { from{opacity:0} to{opacity:1} }
+        .fade { animation: fadein .35s ease both; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        window.addEventListener("error", (e) => {
+            const pre = document.createElement("pre");
+            pre.style.cssText = "position:fixed;bottom:0;left:0;max-width:100vw;max-height:40vh;overflow:auto;margin:0;padding:12px;background:#111;color:#f44;z-index:99999";
+            pre.textContent = "JS error: " + e.message + "\n" + (e.filename||"") + ":" + (e.lineno||"") + ":" + (e.colno||"");
+            document.body.appendChild(pre);
+        });
+    </script>
+
+    <script type="text/babel" data-presets="env,react">
+        const { useState, useEffect, useMemo } = React;
+
+        // Types
+        const GAME_JSON_URL = "https://raw.githubusercontent.com/vanekpa/canvaveskole/main/game1.json";
+
+        // Icon inference functions
+        function inferIconKey(page){
+            if(page?.ui?.icon) return page.ui.icon;
+            if(page?.type==="lock") return "lock";
+            if(page?.type==="info") return (page?.ui?.icon==="win" ? "win" : "story");
+            return "lock";
+        }
+
+        function deriveNavSteps(pages, loseId){
+            return (pages||[])
+                .filter(p=>p?.id && p.id!==loseId && inferIconKey(p)!=="lose")
+                .map(p=>({ id:p.id, iconKey: inferIconKey(p) }));
+        }
+
+        // Progress Rail Component
+        const ICONS = { 
+            story:"📖", 
+            lock:"🔒", 
+            win:"🏆", 
+            lose:"⏰" 
+        };
+
+        function ProgressRail({ steps, currentId, onStepClick, showTimer=false, timeLeft=0, warnAt=30 }) {
+            const mm = Math.floor(timeLeft/60).toString().padStart(2,"0");
+            const ss = (timeLeft%60).toString().padStart(2,"0");
+            const warn = timeLeft > 0 && timeLeft <= warnAt;
+            const currentIndex = Math.max(0, steps.findIndex(s => s.id === currentId));
+            return (
+                <div className="fixed top-0 left-0 right-0 z-30">
+                    <div className="mx-auto max-w-[1000px] px-3 py-2 rounded-b-3xl backdrop-blur
+                          bg-white/50 shadow-lg border-b border-white/40 flex items-center gap-2">
+                        {steps.map((s, i) => {
+                            const state = i === currentIndex ? "current" : i < currentIndex ? "done" : "locked";
+                            const clickable = i <= currentIndex;
+                            const cls =
+                                state === "current" ? "bg-amber-300 text-slate-900 cursor-pointer"
+                                : state === "done" ? "bg-emerald-400 text-white hover:opacity-90 cursor-pointer"
+        

@@ -1,0 +1,95 @@
+           ${expanded ? "scale-110 shadow-lg" : "scale-100"}`}
+                    title={a.name || "Autor"}
+                >
+                    {a.logo && (
+                        <img
+                            src={a.logo}
+                            alt={a.name || "Autor"}
+                            className={`rounded-full ${expanded ? "w-7 h-7" : "w-5 h-5"}`}
+                        />
+                    )}
+                    <span className={`text-xs ${expanded ? "font-semibold" : "font-medium"} text-slate-700`}>
+                        {a.text || a.name}
+                    </span>
+                </a>
+            );
+        }
+
+        // Game Host Component
+        function GameHost({ game }) {
+            const pagesById = useMemo(() => Object.fromEntries(game.pages.map(p => [p.id, p])), [game]);
+
+            const start = game.meta?.start_page || game.pages[0]?.id;
+            const [currentId, setCurrentId] = useState(start);
+            const [gameCompleted, setGameCompleted] = useState(false);
+            const [solvedByStep, setSolvedByStep] = useState({});
+
+            // --- přesunout nahoru, ať jsou k dispozici všude ---
+            const loseId = game.meta?.timer?.lose_page;
+            const navSteps = React.useMemo(()=>deriveNavSteps(game.pages, loseId),[game.pages, loseId]);
+
+            // Timer logic
+            const timerCfg = game.meta?.timer || {};
+            const hasTimer = !!timerCfg.enabled && !!timerCfg.seconds;
+            const [timeLeft, setTimeLeft] = useState(timerCfg.seconds || 0);
+
+            useEffect(() => {
+                if (!hasTimer) return;
+                setTimeLeft(timerCfg.seconds); // reset při načtení hry
+            }, [hasTimer, timerCfg.seconds]);
+
+            useEffect(() => {
+                if (!hasTimer || timeLeft <= 0) return;
+                const id = setInterval(() => setTimeLeft(t => t - 1), 1000);
+                return () => clearInterval(id);
+            }, [hasTimer, timeLeft]);
+
+            useEffect(() => {
+                if (!hasTimer || timeLeft > 0) return;
+                if (currentId === loseId) return;   // ← nepadat do smyčky
+                if (loseId) {
+                    setCurrentId(loseId);
+                } else {
+                    alert("⏰ Čas vypršel! Zkus to znovu.");
+                    setCurrentId(start);
+                    setSolvedByStep({});
+                    setTimeLeft(timerCfg.seconds || 0);
+                }
+            }, [hasTimer, timeLeft, currentId, loseId, start, timerCfg.seconds]);
+
+            const page = pagesById[currentId];
+            const currentIndex = Math.max(0, navSteps.findIndex(s=>s.id===currentId));
+
+            function onResolve(success) {
+                const next = success ? page?.next_on_success : page?.next_on_fail;
+                if (success) {
+                    setSolvedByStep(s => ({ ...s, [currentId]: true }));
+                    if (hasTimer && currentId === loseId) setTimeLeft(timerCfg.seconds || 0);
+                }
+                if (next) {
+                    setCurrentId(next);
+                } else {
+                    const idx = game.pages.findIndex(p => p.id === currentId);
+                    const np = game.pages[idx + 1];
+                    if (np) setCurrentId(np.id);
+                    else setGameCompleted(true);
+                    return;
+                }
+            }
+
+            const handleStepClick = (targetId) => {
+                const idx = navSteps.findIndex(s=>s.id===targetId);
+                if (idx>-1 && idx<=currentIndex) setCurrentId(targetId);
+            };
+            
+            if (!page) {
+                return (
+                    <div className="mx-auto max-w-[900px] min-h-screen text-slate-800 p-6">
+                        <div className="text-red-600">Neplatné ID stránky: {currentId}</div>
+                    </div>
+                );
+            }
+            
+            if (gameCompleted) {
+                return (
+     

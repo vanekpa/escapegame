@@ -1,0 +1,76 @@
+hapes Lock Component
+        function ShapesLock({ lock, assets, onDone, readonly=false, preset=[] }) {
+            const shapes = assets?.shapes?.length ? assets.shapes : SHAPES_DEFAULT;
+            const len = lock.input?.length ?? lock.answer?.length ?? 3;
+            const [seq,setSeq] = React.useState(preset);
+            const [hl,setHl] = React.useState(Array(len).fill(null));
+            const submit=()=>{
+                const ans = lock.answer||[];
+                const h = seq.map((v,i)=> (v===ans[i] ? "ok":"bad"));
+                setHl(h); onDone(JSON.stringify(seq)===JSON.stringify(ans));
+            };
+            return (
+                <div className="space-y-4" onKeyDown={useEnter(submit)} tabIndex={0}>
+                    <Slots values={seq} length={len} highlight={hl} render={(v)=> v? <PrettyShape s={v}/>:""}/>
+                    <div className="flex flex-wrap justify-center gap-3">
+                        {shapes.map(s=>(
+                            <button key={s} onClick={()=> seq.length<len && setSeq(a=>[...a,s])} disabled={readonly}
+                                className="w-14 h-14 rounded-2xl bg-white grid place-items-center text-slate-800 shadow hover:scale-105 active:scale-95 transition">
+                                <PrettyShape s={s}/>
+                            </button>
+                        ))}
+                    </div>
+                    <ActionBar>
+                        <ConfirmResetButton onConfirm={()=>{setSeq([]);setHl(Array(len).fill(null));}} />
+                        <button onClick={submit} disabled={seq.length!==len}
+                            className="px-6 py-3 rounded-xl bg-emerald-500 disabled:bg-gray-400 text-white font-semibold shadow">✓</button>
+                    </ActionBar>
+                </div>
+            );
+        }
+
+        // Quiz Lock Component
+        function QuizLock({ lock, onDone }) {
+            const cfg = lock.quiz || lock;
+            const draw = Math.max(1, cfg.draw ?? (cfg.questions?.length || 1));
+            const minR = cfg.min_ratio ?? 0.8;
+            const shufRetry = cfg.shuffle_on_retry ?? true;
+            const shuf = a => [...a].sort(()=>Math.random()-0.5);
+
+            const make = () => {
+                const qs = shuf(cfg.questions || []).slice(0, draw).map(q => ({
+                    id: q.id || Math.random().toString(36).slice(2),
+                    text: q.text,
+                    answers: shuf((q.answers||[]).map(a=>({
+                        id: a.id || Math.random().toString(36).slice(2),
+                        text: a.text, correct: !!a.correct
+                    })))
+                }));
+                return qs;
+            };
+
+            const [round, setR] = React.useState(make);
+            const [ans, setA] = React.useState({});
+            const [show, setS] = React.useState(false);
+            const [sc, setSc] = React.useState(0);
+            const pick = (q,a)=>!show&&setA(x=>({...x,[q]:a}));
+            const sub = ()=>{
+                let s=0; for(const q of round){
+                    const c=q.answers.find(a=>a.correct)?.id;
+                    if(ans[q.id]===c)s++;
+                } setSc(s); setS(true);
+            };
+            const retry=()=>{setA({});setS(false);if(shufRetry)setR(make());};
+            const ratio = round.length?sc/round.length:0;
+            const done = Object.keys(ans).length===round.length;
+
+            return (
+                <div className="space-y-4 text-slate-900">
+                    <div className="text-center font-semibold text-lg text-amber-600">🎃 Mini kvíz</div>
+                    <div className="space-y-5">
+                        {round.map((q,i)=>(
+                            <div key={q.id} className="space-y-3">
+                                <div className="font-semibold">{i+1}. {q.text}</div>
+                                <div className="grid gap-2">
+                                    {q.answers.map((a,j)=>{
+                                     

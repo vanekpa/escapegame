@@ -1,0 +1,75 @@
+   const sel=ans[q.id]===a.id;
+                                        return(
+                                            <button key={a.id} onClick={()=>pick(q.id,a.id)}
+                                                className={`w-full text-left px-4 py-3 rounded-xl border shadow-sm transition 
+                                                ${sel?"border-sky-400 ring-1 ring-sky-300":"border-black/10 hover:border-slate-300 bg-white"}`}>
+                                                <b>{String.fromCharCode(65+j)}.</b> {a.text}
+                                            </button>);
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {!show ? (
+                        <div className="flex justify-center gap-3 pt-2">
+                            <button onClick={retry} className="px-5 py-2 rounded-xl bg-slate-300 shadow">Reset</button>
+                            <button onClick={sub} disabled={!done}
+                                className={`px-6 py-2 rounded-xl text-white font-semibold shadow ${done?"bg-emerald-600 hover:bg-emerald-700":"bg-gray-400 cursor-not-allowed"}`}>
+                                Odeslat
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-2 text-center">
+                            <div className="text-lg font-semibold">
+                                Správně: {sc}/{round.length} ({Math.round(ratio*100)} %)
+                            </div>
+                            <div className="flex justify-center gap-3">
+                                <button onClick={retry} className="px-5 py-2 rounded-xl bg-slate-300 shadow">Zkusit znovu</button>
+                                <button onClick={()=>onDone(ratio>=minR)}
+                                    className={`px-6 py-2 rounded-xl text-white font-semibold shadow ${ratio>=minR?"bg-emerald-600 hover:bg-emerald-700":"bg-gray-400 cursor-not-allowed"}`}>
+                                    Odemknout
+                                </button>
+                            </div>
+                            {ratio<minR&&<div className="text-sm text-rose-600">Potřebuješ {Math.round(minR*100)} %.</div>}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Cryptex resolver and components
+        function resolveCryptexWheels(assets, lock) {
+            if (lock?.input?.wheels && Array.isArray(lock.input.wheels)) {
+                return lock.input.wheels;
+            }
+            const ref = lock?.input?.wheels_ref;
+            if (ref && assets?.keyboards?.[ref]?.wheels) {
+                return assets.keyboards[ref].wheels;
+            }
+            if (assets?.keyboards?.cryptex?.wheels) {
+                return assets.keyboards.cryptex.wheels;
+            }
+            return ["ABCD", "EFGH", "IJKL", "MNOP"]; // nouzově
+        }
+
+        function CryptexWheel({ set, value, onChange }) {
+            const list = Array.isArray(set) ? set : String(set).split("");
+            const idx = Math.max(0, list.indexOf(value));
+            const prev = list[(idx - 1 + list.length) % list.length];
+            const next = list[(idx + 1) % list.length];
+
+            const up = () => onChange(list[(idx - 1 + list.length) % list.length]);
+            const down = () => onChange(list[(idx + 1) % list.length]);
+
+            return (
+                <div className="flex flex-col items-center mx-1">
+                    <button
+                        onClick={up}
+                        className="w-8 h-6 grid place-items-center rounded-md bg-slate-200 text-slate-700 shadow hover:bg-slate-300"
+                        aria-label="Up"
+                    >
+                        ▲
+                    </button>
+
+                    <div className="w-12 rounded-xl overflow-hidden bg-slate-9
