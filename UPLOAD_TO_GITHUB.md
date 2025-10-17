@@ -37,4 +37,20 @@ Follow these steps to publish the current project to a new GitHub repository.
   git remote set-url origin git@github.com:<username>/<repository>.git
   ```
 - Authenticate using an SSH key or a GitHub personal access token depending on which remote URL you use.
+- If `git push` responds with `fatal: No configured push destination.`, it means no remote has been added yet.  Add the remote
+  using step 2 and re-run the push command, or provide the remote name explicitly: `git push origin work`.
+
+## Example push attempt from this environment
+To verify the current setup, we ran `git push` directly in the container.  The command failed with the following output:
+
+```
+fatal: No configured push destination.
+Either specify the URL from the command-line or configure a remote repository using
+    git remote add <name> <url>
+and then push using the remote name
+    git push <name>
+```
+
+This confirms that the repository still lacks a configured remote.  After you add your GitHub repository as `origin`, the same
+command will succeed.
 
