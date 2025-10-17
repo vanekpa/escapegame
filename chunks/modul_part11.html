@@ -1,0 +1,61 @@
+=>{
+                let s=0; for(const q of round){
+                    const c=q.answers.find(a=>a.correct)?.id;
+                    if(ans[q.id]===c)s++;
+                } setSc(s); setS(true);
+            };
+            const retry=()=>{setA({});setS(false);if(shufRetry)setR(make());};
+            const ratio = round.length?sc/round.length:0;
+            const done = Object.keys(ans).length===round.length;
+
+            return (
+                <div className="space-y-4 text-slate-900">
+                    <div className="text-center font-semibold text-lg text-amber-600">🎃 Mini kvíz</div>
+                    <div className="space-y-5">
+                        {round.map((q,i)=>(
+                            <div key={q.id} className="space-y-3">
+                                <div className="font-semibold">{i+1}. {q.text}</div>
+                                <div className="grid gap-2">
+                                    {q.answers.map((a,j)=>{
+                                        const sel=ans[q.id]===a.id;
+                                        return(
+                                            <button key={a.id} onClick={()=>pick(q.id,a.id)}
+                                                className={`w-full text-left px-4 py-3 rounded-xl border shadow-sm transition 
+                                                ${sel?"border-sky-400 ring-1 ring-sky-300":"border-black/10 hover:border-slate-300 bg-white"}`}>
+                                                <b>{String.fromCharCode(65+j)}.</b> {a.text}
+                                            </button>);
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {!show ? (
+                        <div className="flex justify-center gap-3 pt-2">
+                            <button onClick={retry} className="px-5 py-2 rounded-xl bg-slate-300 shadow">Reset</button>
+                            <button onClick={sub} disabled={!done}
+                                className={`px-6 py-2 rounded-xl text-white font-semibold shadow ${done?"bg-emerald-600 hover:bg-emerald-700":"bg-gray-400 cursor-not-allowed"}`}>
+                                Odeslat
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-2 text-center">
+                            <div className="text-lg font-semibold">
+                                Správně: {sc}/{round.length} ({Math.round(ratio*100)} %)
+                            </div>
+                            <div className="flex justify-center gap-3">
+                                <button onClick={retry} className="px-5 py-2 rounded-xl bg-slate-300 shadow">Zkusit znovu</button>
+                                <button onClick={()=>onDone(ratio>=minR)}
+                                    className={`px-6 py-2 rounded-xl text-white font-semibold shadow ${ratio>=minR?"bg-emerald-600 hover:bg-emerald-700":"bg-gray-400 cursor-not-allowed"}`}>
+                                    Odemknout
+                                </button>
+                            </div>
+                            {ratio<minR&&<div className="text-sm text-rose-600">Potřebuješ {Math.round(minR*100)} %.</div>}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Cryptex resolver and components
+        function

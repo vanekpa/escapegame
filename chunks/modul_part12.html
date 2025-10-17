@@ -1,0 +1,76 @@
+ resolveCryptexWheels(assets, lock) {
+            if (lock?.input?.wheels && Array.isArray(lock.input.wheels)) {
+                return lock.input.wheels;
+            }
+            const ref = lock?.input?.wheels_ref;
+            if (ref && assets?.keyboards?.[ref]?.wheels) {
+                return assets.keyboards[ref].wheels;
+            }
+            if (assets?.keyboards?.cryptex?.wheels) {
+                return assets.keyboards.cryptex.wheels;
+            }
+            return ["ABCD", "EFGH", "IJKL", "MNOP"]; // nouzově
+        }
+
+        function CryptexWheel({ set, value, onChange }) {
+            const list = Array.isArray(set) ? set : String(set).split("");
+            const idx = Math.max(0, list.indexOf(value));
+            const prev = list[(idx - 1 + list.length) % list.length];
+            const next = list[(idx + 1) % list.length];
+
+            const up = () => onChange(list[(idx - 1 + list.length) % list.length]);
+            const down = () => onChange(list[(idx + 1) % list.length]);
+
+            return (
+                <div className="flex flex-col items-center mx-1">
+                    <button
+                        onClick={up}
+                        className="w-8 h-6 grid place-items-center rounded-md bg-slate-200 text-slate-700 shadow hover:bg-slate-300"
+                        aria-label="Up"
+                    >
+                        ▲
+                    </button>
+
+                    <div className="w-12 rounded-xl overflow-hidden bg-slate-900 text-white shadow ring-1 ring-white/10 select-none">
+                        <div className="opacity-40 text-sm py-1 text-center">{prev}</div>
+                        <div className="text-xl font-bold py-1 text-center bg-slate-800">{value}</div>
+                        <div className="opacity-40 text-sm py-1 text-center">{next}</div>
+                    </div>
+
+                    <button
+                        onClick={down}
+                        className="w-8 h-6 grid place-items-center rounded-md bg-slate-200 text-slate-700 shadow hover:bg-slate-300 mt-1"
+                        aria-label="Down"
+                    >
+                        ▼
+                    </button>
+                </div>
+            );
+        }
+
+        function CryptexLock({ lock, assets, onDone, readonly = false, preset = [] }) {
+            const rawWheels = resolveCryptexWheels(assets, lock);
+            const sets = rawWheels.map((w) => (Array.isArray(w) ? w : String(w).split("")));
+            const len = Math.min(lock?.input?.length || sets.length, sets.length);
+            const answer = (lock?.answer || []).slice(0, len);
+
+            const [vals, setVals] = React.useState(
+                preset.length ? preset.slice(0, len) : sets.slice(0, len).map((s) => s[0])
+            );
+            const [hl, setHl] = React.useState(Array(len).fill(null));
+
+            const change = (i, val) => setVals((v) => v.map((x, ix) => (ix === i ? val : x)));
+
+            const submit = () => {
+                const correct = JSON.stringify(vals) === JSON.stringify(answer);
+                setHl(vals.map((v, i) => (answer[i] == null ? null : v === answer[i] ? "ok" : "bad")));
+                onDone(correct, vals);
+            };
+
+            const reset = () => {
+                setVals(sets.slice(0, len).map((s) => s[0]));
+                setHl(Array(len).fill(null));
+            };
+
+            return (
+                <div className="space-y-4" tabIndex={0} onKeyDown={onEnter(submit)}>

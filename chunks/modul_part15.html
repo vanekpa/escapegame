@@ -1,0 +1,79 @@
+                onClick={() => {
+                                    setCurrentId(start);
+                                    setSolvedByStep({});
+                                    setGameCompleted(false);
+                                    if (hasTimer) setTimeLeft(timerCfg.seconds || 0);
+                                }}
+                                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg"
+                            >
+                                Hrát znovu
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+            
+            const lockMode = page.lock?.mode;
+            const dockSize = ["colors","shapes","arrows","cryptex","quiz"].includes(lockMode) ? "expanded" : "compact";
+
+            return (
+                <div className="mx-auto max-w-[900px] min-h-screen pt-[56px]">
+                    <ProgressRail
+                        steps={navSteps}
+                        currentId={currentId}
+                        onStepClick={handleStepClick}
+                        showTimer={!!(timerCfg.show && hasTimer)}
+                        timeLeft={timeLeft}
+                        warnAt={timerCfg.warning_at ?? 30}
+                    />
+                    <div key={currentId} className="fade">
+                        <Scene
+                            page={page}
+                            assets={game.assets}
+                            onResolve={onResolve}
+                            solved={!!solvedByStep[currentId]}
+                            dockSize={dockSize}
+                        />
+                    </div>
+                    <AuthorBadge game={game} />
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const [game, setGame] = useState(null);
+            const [error, setError] = useState(null);
+            const [loading, setLoading] = useState(true);
+            
+            useEffect(() => {
+                fetch(GAME_JSON_URL)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Add fallback for old JSON format
+                        data.pages.forEach(p => {
+                            if (p.ui?.background_img && !p.ui.background_imgs)
+                                p.ui.background_imgs = [p.ui.background_img];
+                        });
+                        setGame(data);
+                        setLoading(false);
+                    })
+                    .catch(err => {
+                        setError(String(err));
+                        setLoading(false);
+                    });
+            }, []);
+            
+            if (loading) {
+                return (
+                    <div className="min-h-screen text-slate-800 flex items-center justify-center">
+                        <div className="text-center space-y-4 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl">
+                            <div className="animate-spin text-4xl">⚙️</div>
+                            <div className="text-xl">Načítám hru...</div>
+                        </div>
+             
