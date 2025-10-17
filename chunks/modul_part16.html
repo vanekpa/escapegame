@@ -1,0 +1,39 @@
+       </div>
+                );
+            }
+            
+            if (error) {
+                return (
+                    <div className="min-h-screen text-slate-800 flex items-center justify-center">
+                        <div className="text-center space-y-4 p-6 bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl">
+                            <div className="text-4xl">❌</div>
+                            <div className="text-xl text-red-600">Chyba při načítání hry</div>
+                            <div className="text-slate-600">{error}</div>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow"
+                            >
+                                Zkusit znovu
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+            
+            if (!game) {
+                return (
+                    <div className="min-h-screen text-slate-800 flex items-center justify-center">
+                        <div className="text-red-600 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl">Nepodařilo se načíst data hry</div>
+                    </div>
+                );
+            }
+            
+            return <GameHost game={game} />;
+        }
+
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98fde02d8316b377',t:'MTc2MDY4Mzk3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

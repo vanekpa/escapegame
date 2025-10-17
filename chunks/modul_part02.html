@@ -1,0 +1,71 @@
+center gap-2">
+                        {steps.map((s, i) => {
+                            const state = i === currentIndex ? "current" : i < currentIndex ? "done" : "locked";
+                            const clickable = i <= currentIndex;
+                            const cls =
+                                state === "current" ? "bg-amber-300 text-slate-900 cursor-pointer"
+                                : state === "done" ? "bg-emerald-400 text-white hover:opacity-90 cursor-pointer"
+                                : "bg-slate-300/60 text-slate-700 cursor-not-allowed";
+                            return (
+                                <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => clickable && onStepClick?.(s.id)}
+                                    className={`px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-1 shadow ${cls}`}
+                                >
+                                    <span>{ICONS[s.iconKey] || "🔒"}</span>
+                                    <span className="hidden sm:inline">{s.iconKey}</span>
+                                </button>
+                            );
+                        })}
+
+                        {/* mezera a timer napravo */}
+                        <div className="ml-auto" />
+                        {showTimer && (
+                            <div className={`px-3 py-1.5 rounded-full text-sm font-bold shadow
+                                             ${warn ? "bg-rose-500 text-white animate-pulse"
+                                                    : "bg-slate-800 text-white/95"}`}>
+                                ⏰ {mm}:{ss}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Bottom Dock Component
+        function BottomDock({ children, size="compact" }) {
+            const cls = size === "expanded"
+                ? "max-h-[62vh] sm:max-h-[55vh]"   // víc místa pro velké klávesnice
+                : "max-h-[42vh] sm:max-h-[36vh]";
+            return (
+                <div className="fixed bottom-0 left-0 right-0 z-20">
+                    <div className={`mx-auto max-w-[1000px] ${cls} overflow-y-auto
+                        rounded-t-[26px] bg-white/80 backdrop-blur-md
+                        shadow-[0_-20px_60px_rgba(0,0,0,.25)] border-t border-black/10 p-4`}>
+                        {children}
+                    </div>
+                </div>
+            );
+        }
+
+        // Info Bubble Component
+        function InfoBubble({ info, onContinue }) {
+            const i = info || {};
+            const desc = i.description || i.text || i.story || "";
+            return (
+                <div className="max-w-xl w-full bg-black/45 backdrop-blur rounded-2xl p-5 text-white text-center">
+                    {i.title && <h1 className="text-2xl font-semibold mb-2">{i.title}</h1>}
+                    {desc && <p className="text-base opacity-90">{desc}</p>}
+                    <button
+                        onClick={onContinue}
+                        className="mt-4 inline-flex px-6 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600"
+                    >
+                        Pokračovat
+                    </button>
+                </div>
+            );
+        }
+
+        // Scene: obrázek vždy celý (letterbox), přepínání více obrázků z background_imgs
+      
