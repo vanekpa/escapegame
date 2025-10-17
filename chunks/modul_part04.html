@@ -1,0 +1,67 @@
+          className={`w-2 h-2 rounded-full ${i===idx?"bg-white":"bg-white/40"}`} />
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* overlay – míra ztmavení z JSON */}
+                    <div className="absolute left-0 right-0 top-0 pointer-events-none"
+                         style={{ height: VIEW_H, background:`rgba(0,0,0,${darken})` }} />
+
+                    {/* titulek scény */}
+                    {page?.info?.title && (
+                        <div className="absolute top-2 left-0 right-0 p-3 flex justify-center">
+                            <div className="px-3 py-1 rounded-full bg-black/40 text-white text-sm backdrop-blur">
+                                {page.info.title}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* info bublina – zobraz až po reveal_ms */}
+                    {isInfo && revealed && (
+                        <div className="absolute left-0 right-0 flex justify-center p-6"
+                             style={{ top:`calc(${VIEW_H}/2)`, transform:"translateY(-50%)" }}>
+                            <InfoBubble info={page.info} onContinue={() => onResolve(true)} />
+                        </div>
+                    )}
+
+                    {/* spodní dock – taky až po reveal_ms */}
+                    {revealed && (
+                        <BottomDock size={dockSize}>
+                            {page?.type==="lock" && (
+                                <LockRouter lock={page.lock} assets={assets} info={page.info}
+                                            onDone={onResolve} solved={solved} />
+                            )}
+                        </BottomDock>
+                    )}
+                </div>
+            );
+        }
+
+        // Confirm Reset Button Component
+        function ConfirmResetButton({onConfirm,className=""}) {
+          const [armed,setArmed]=React.useState(false);
+          React.useEffect(()=>{ if(!armed)return; const id=setTimeout(()=>setArmed(false),1500); return()=>clearTimeout(id);},[armed]);
+          return (
+            <button onClick={()=>armed?onConfirm():setArmed(true)}
+              className={`${className} px-5 py-3 rounded-xl shadow ${armed?"bg-rose-500 text-white":"bg-slate-300 text-slate-900"}`}>
+              {armed?"Klikni znovu":"Reset"}
+            </button>
+          );
+        }
+
+        // ZoomHint Component
+        function ZoomHint({ title="Text", content="" }) {
+          const [open,setOpen]=React.useState(false);
+          return (<>
+            <button onClick={()=>setOpen(true)} title="Zvětšit"
+              className="ml-2 inline-flex items-center justify-center w-7 h-7 rounded-md bg-slate-200 text-slate-700 shadow">🔎</button>
+            {open&&(
+              <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm grid place-items-center p-4">
+                <div className="w-full max-w-[720px] bg-white rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="px-4 py-3 border-b flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+                    <button onClick={()=>setOpen(false)} className="px-3 py-1.5 rounded-md bg-slate-100 text-slate-700 text-sm">Zavřít</button>
+                  </div>
+                  <div className="p-4 max-h-[70vh] overflow-au

@@ -1,0 +1,81 @@
+                    {/* horní „okýnka" se zvýrazněním */}
+                    <Slots values={vals} length={len} highlight={hl} />
+
+                    {/* samotné „válce" */}
+                    <div className="flex justify-center">
+                        {Array.from({ length: len }).map((_, i) => (
+                            <CryptexWheel
+                                key={i}
+                                set={sets[i]}
+                                value={vals[i]}
+                                onChange={(v) => !readonly && change(i, v)}
+                            />
+                        ))}
+                    </div>
+
+                    {/* ovládací tlačítka */}
+                    <ActionBar>
+                        <ConfirmResetButton onConfirm={reset} />
+                        <button onClick={submit}
+                            className="px-6 py-3 rounded-xl bg-emerald-500 text-white font-semibold shadow hover:bg-emerald-600">✓</button>
+                    </ActionBar>
+                </div>
+            );
+        }
+
+        // Author Badge Component
+        function AuthorBadge({ game }) {
+            const a = game?.meta?.author;
+            if (!a) return null;
+            const pos = a.position === "bottom-right" ? "bottom-2 right-2" : "bottom-2 left-2";
+            const [expanded, setExpanded] = React.useState(false);
+
+            const handleClick = (e) => {
+                e.preventDefault();
+                if (!expanded) {
+                    setExpanded(true);
+                    return;
+                }
+                if (a.url) window.open(a.url, "_blank", "noopener,noreferrer");
+            };
+
+            return (
+                <a
+                    href={a.url || "#"}
+                    onClick={handleClick}
+                    className={`fixed ${pos} z-40 flex items-center gap-2 bg-white/75 hover:bg-white/90
+                              backdrop-blur rounded-full shadow px-2 py-1 transition-transform
+                              ${expanded ? "scale-110 shadow-lg" : "scale-100"}`}
+                    title={a.name || "Autor"}
+                >
+                    {a.logo && (
+                        <img
+                            src={a.logo}
+                            alt={a.name || "Autor"}
+                            className={`rounded-full ${expanded ? "w-7 h-7" : "w-5 h-5"}`}
+                        />
+                    )}
+                    <span className={`text-xs ${expanded ? "font-semibold" : "font-medium"} text-slate-700`}>
+                        {a.text || a.name}
+                    </span>
+                </a>
+            );
+        }
+
+        // Game Host Component
+        function GameHost({ game }) {
+            const pagesById = useMemo(() => Object.fromEntries(game.pages.map(p => [p.id, p])), [game]);
+
+            const start = game.meta?.start_page || game.pages[0]?.id;
+            const [currentId, setCurrentId] = useState(start);
+            const [gameCompleted, setGameCompleted] = useState(false);
+            const [solvedByStep, setSolvedByStep] = useState({});
+
+            // --- přesunout nahoru, ať jsou k dispozici všude ---
+            const loseId = game.meta?.timer?.lose_page;
+            const navSteps = React.useMemo(()=>deriveNavSteps(game.pages, loseId),[game.pages, loseId]);
+
+            // Timer logic
+            const timerCfg = game.meta?.timer || {};
+            const hasTimer = !!timerCfg.enabled && !!timerCfg.seconds;
+            const [time

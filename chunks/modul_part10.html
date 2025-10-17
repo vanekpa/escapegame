@@ -1,0 +1,71 @@
+yShape({ s }) {
+            const key = SHAPE_ALIASES[s] || s; // convert "◯" -> "circle" etc.
+            const svg = SHAPE_SVGS[key];
+            if (!svg) {
+                // fallback: original character
+                return <span className="text-[28px] sm:text-[32px]">{s}</span>;
+            }
+            return (
+                <svg viewBox="0 0 48 48" className="w-8 h-8 sm:w-10 sm:h-10" fill="#111">
+                    {svg}
+                </svg>
+            );
+        }
+
+        // Shapes Lock Component
+        function ShapesLock({ lock, assets, onDone, readonly=false, preset=[] }) {
+            const shapes = assets?.shapes?.length ? assets.shapes : SHAPES_DEFAULT;
+            const len = lock.input?.length ?? lock.answer?.length ?? 3;
+            const [seq,setSeq] = React.useState(preset);
+            const [hl,setHl] = React.useState(Array(len).fill(null));
+            const submit=()=>{
+                const ans = lock.answer||[];
+                const h = seq.map((v,i)=> (v===ans[i] ? "ok":"bad"));
+                setHl(h); onDone(JSON.stringify(seq)===JSON.stringify(ans));
+            };
+            return (
+                <div className="space-y-4" onKeyDown={useEnter(submit)} tabIndex={0}>
+                    <Slots values={seq} length={len} highlight={hl} render={(v)=> v? <PrettyShape s={v}/>:""}/>
+                    <div className="flex flex-wrap justify-center gap-3">
+                        {shapes.map(s=>(
+                            <button key={s} onClick={()=> seq.length<len && setSeq(a=>[...a,s])} disabled={readonly}
+                                className="w-14 h-14 rounded-2xl bg-white grid place-items-center text-slate-800 shadow hover:scale-105 active:scale-95 transition">
+                                <PrettyShape s={s}/>
+                            </button>
+                        ))}
+                    </div>
+                    <ActionBar>
+                        <ConfirmResetButton onConfirm={()=>{setSeq([]);setHl(Array(len).fill(null));}} />
+                        <button onClick={submit} disabled={seq.length!==len}
+                            className="px-6 py-3 rounded-xl bg-emerald-500 disabled:bg-gray-400 text-white font-semibold shadow">✓</button>
+                    </ActionBar>
+                </div>
+            );
+        }
+
+        // Quiz Lock Component
+        function QuizLock({ lock, onDone }) {
+            const cfg = lock.quiz || lock;
+            const draw = Math.max(1, cfg.draw ?? (cfg.questions?.length || 1));
+            const minR = cfg.min_ratio ?? 0.8;
+            const shufRetry = cfg.shuffle_on_retry ?? true;
+            const shuf = a => [...a].sort(()=>Math.random()-0.5);
+
+            const make = () => {
+                const qs = shuf(cfg.questions || []).slice(0, draw).map(q => ({
+                    id: q.id || Math.random().toString(36).slice(2),
+                    text: q.text,
+                    answers: shuf((q.answers||[]).map(a=>({
+                        id: a.id || Math.random().toString(36).slice(2),
+                        text: a.text, correct: !!a.correct
+                    })))
+                }));
+                return qs;
+            };
+
+            const [round, setR] = React.useState(make);
+            const [ans, setA] = React.useState({});
+            const [show, setS] = React.useState(false);
+            const [sc, setSc] = React.useState(0);
+            const pick = (q,a)=>!show&&setA(x=>({...x,[q]:a}));
+            const sub = ()
