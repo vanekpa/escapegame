@@ -1,4 +1,27 @@
-?.reveal_ms ?? 0;
+  function Scene({ page, assets, onResolve, solved, dockSize = "compact" }) {
+            const BASE = "./";
+            const resolveImg = (p) => (p && !/^https?:\/\//.test(p) ? BASE + p : p);
+
+            const imgs = (page?.ui?.background_imgs?.length
+                ? page.ui.background_imgs
+                : page?.ui?.background_img ? [page.ui.background_img] : []
+            ).map(resolveImg);
+
+            const [idx, setIdx] = React.useState(0);
+            const cur = imgs[idx] || null;
+
+            // --- nové ovladače vzhledu z JSON ---
+            const isInfo = page?.type === "info";
+            const fullBleed = !!page?.ui?.full_bleed && isInfo;
+            const darken = typeof page?.ui?.darken === "number"
+                ? page.ui.darken
+                : (isInfo ? 0.05 : 0.25); // defaulty
+
+            // výška "plátna"
+            const VIEW_H = fullBleed ? "82vh" : "60vh";
+
+            // opožděné odhalení obsahu (bublina + dock)
+            const revealMs = page?.ui?.reveal_ms ?? 0;
             const [revealed, setRevealed] = React.useState(revealMs === 0);
             React.useEffect(() => {
                 if (revealMs > 0) {
@@ -40,34 +63,4 @@
                                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
                                     {imgs.map((_, i) => (
                                         <button key={i} onClick={() => setIdx(i)}
-                                                className={`w-2 h-2 rounded-full ${i===idx?"bg-white":"bg-white/40"}`} />
-                                    ))}
-                                </div>
-                            </>
-                        )}
-                    </div>
-
-                    {/* overlay – míra ztmavení z JSON */}
-                    <div className="absolute left-0 right-0 top-0 pointer-events-none"
-                         style={{ height: VIEW_H, background:`rgba(0,0,0,${darken})` }} />
-
-                    {/* titulek scény */}
-                    {page?.info?.title && (
-                        <div className="absolute top-2 left-0 right-0 p-3 flex justify-center">
-                            <div className="px-3 py-1 rounded-full bg-black/40 text-white text-sm backdrop-blur">
-                                {page.info.title}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* info bublina – zobraz až po reveal_ms */}
-                    {isInfo && revealed && (
-                        <div className="absolute left-0 right-0 flex justify-center p-6"
-                             style={{ top:`calc(${VIEW_H}/2)`, transform:"translateY(-50%)" }}>
-                            <InfoBubble info={page.info} onContinue={() => onResolve(true)} />
-                        </div>
-                    )}
-
-                    {/* spodní dock – taky až po reveal_ms */}
-                    {revealed && (
-                        <BottomD
+                                      

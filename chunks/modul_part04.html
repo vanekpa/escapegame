@@ -1,4 +1,34 @@
-ock size={dockSize}>
+          className={`w-2 h-2 rounded-full ${i===idx?"bg-white":"bg-white/40"}`} />
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* overlay – míra ztmavení z JSON */}
+                    <div className="absolute left-0 right-0 top-0 pointer-events-none"
+                         style={{ height: VIEW_H, background:`rgba(0,0,0,${darken})` }} />
+
+                    {/* titulek scény */}
+                    {page?.info?.title && (
+                        <div className="absolute top-2 left-0 right-0 p-3 flex justify-center">
+                            <div className="px-3 py-1 rounded-full bg-black/40 text-white text-sm backdrop-blur">
+                                {page.info.title}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* info bublina – zobraz až po reveal_ms */}
+                    {isInfo && revealed && (
+                        <div className="absolute left-0 right-0 flex justify-center p-6"
+                             style={{ top:`calc(${VIEW_H}/2)`, transform:"translateY(-50%)" }}>
+                            <InfoBubble info={page.info} onContinue={() => onResolve(true)} />
+                        </div>
+                    )}
+
+                    {/* spodní dock – taky až po reveal_ms */}
+                    {revealed && (
+                        <BottomDock size={dockSize}>
                             {page?.type==="lock" && (
                                 <LockRouter lock={page.lock} assets={assets} info={page.info}
                                             onDone={onResolve} solved={solved} />
@@ -34,59 +64,4 @@ ock size={dockSize}>
                     <h3 className="text-lg font-bold text-slate-800">{title}</h3>
                     <button onClick={()=>setOpen(false)} className="px-3 py-1.5 rounded-md bg-slate-100 text-slate-700 text-sm">Zavřít</button>
                   </div>
-                  <div className="p-4 max-h-[70vh] overflow-auto text-[20px] leading-8 text-slate-800">{content}</div>
-                </div>
-              </div>)}
-          </>);
-        }
-
-        // ActionBar Component
-        function ActionBar({children}) {
-          return (
-            <div className="sticky bottom-0 left-0 right-0 mt-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]
-                            bg-gradient-to-t from-white/95 to-white/0 backdrop-blur flex justify-center">
-              <div className="flex gap-3">{children}</div>
-            </div>
-          );
-        }
-
-        // Helper functions
-        function shuffle(arr){
-            const a = arr.slice();
-            for (let i=a.length-1;i>0;i--){
-                const j = Math.floor(Math.random()*(i+1));
-                [a[i],a[j]] = [a[j],a[i]];
-            }
-            return a;
-        }
-
-        const useEnterTo = (fn) => {
-            React.useEffect(() => {
-                const h = (e) => { if (e.key === "Enter") fn(); };
-                window.addEventListener("keydown", h);
-                return () => window.removeEventListener("keydown", h);
-            }, [fn]);
-        };
-
-        const useEnter = (cb) => React.useCallback((e)=>{ if(e.key==="Enter") cb(); },[cb]);
-
-        function onEnter(handler) {
-            return (e) => {
-                if (e.key === "Enter") {
-                    e.preventDefault();
-                    handler();
-                }
-            };
-        }
-
-        const statusByPosition = (given=[], answer=[]) =>
-            answer.map((a,i) => (given[i] == null ? null : (given[i] === a ? "ok" : "bad")));
-
-        // Lock Router Component
-        function LockRouter({ lock, assets, info, onDone, solved }) {
-            const L = lock || {};
-            
-            if (solved) {
-                return (
-                    <div className="mx-auto max-w-[760px] text-center text-slate-800">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600/90 shadow 
+                  <div className="p-4 max-h-[70vh] overflow-au

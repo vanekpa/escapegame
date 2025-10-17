@@ -1,75 +1,71 @@
-   const sel=ans[q.id]===a.id;
-                                        return(
-                                            <button key={a.id} onClick={()=>pick(q.id,a.id)}
-                                                className={`w-full text-left px-4 py-3 rounded-xl border shadow-sm transition 
-                                                ${sel?"border-sky-400 ring-1 ring-sky-300":"border-black/10 hover:border-slate-300 bg-white"}`}>
-                                                <b>{String.fromCharCode(65+j)}.</b> {a.text}
-                                            </button>);
-                                    })}
-                                </div>
-                            </div>
+yShape({ s }) {
+            const key = SHAPE_ALIASES[s] || s; // convert "◯" -> "circle" etc.
+            const svg = SHAPE_SVGS[key];
+            if (!svg) {
+                // fallback: original character
+                return <span className="text-[28px] sm:text-[32px]">{s}</span>;
+            }
+            return (
+                <svg viewBox="0 0 48 48" className="w-8 h-8 sm:w-10 sm:h-10" fill="#111">
+                    {svg}
+                </svg>
+            );
+        }
+
+        // Shapes Lock Component
+        function ShapesLock({ lock, assets, onDone, readonly=false, preset=[] }) {
+            const shapes = assets?.shapes?.length ? assets.shapes : SHAPES_DEFAULT;
+            const len = lock.input?.length ?? lock.answer?.length ?? 3;
+            const [seq,setSeq] = React.useState(preset);
+            const [hl,setHl] = React.useState(Array(len).fill(null));
+            const submit=()=>{
+                const ans = lock.answer||[];
+                const h = seq.map((v,i)=> (v===ans[i] ? "ok":"bad"));
+                setHl(h); onDone(JSON.stringify(seq)===JSON.stringify(ans));
+            };
+            return (
+                <div className="space-y-4" onKeyDown={useEnter(submit)} tabIndex={0}>
+                    <Slots values={seq} length={len} highlight={hl} render={(v)=> v? <PrettyShape s={v}/>:""}/>
+                    <div className="flex flex-wrap justify-center gap-3">
+                        {shapes.map(s=>(
+                            <button key={s} onClick={()=> seq.length<len && setSeq(a=>[...a,s])} disabled={readonly}
+                                className="w-14 h-14 rounded-2xl bg-white grid place-items-center text-slate-800 shadow hover:scale-105 active:scale-95 transition">
+                                <PrettyShape s={s}/>
+                            </button>
                         ))}
                     </div>
-
-                    {!show ? (
-                        <div className="flex justify-center gap-3 pt-2">
-                            <button onClick={retry} className="px-5 py-2 rounded-xl bg-slate-300 shadow">Reset</button>
-                            <button onClick={sub} disabled={!done}
-                                className={`px-6 py-2 rounded-xl text-white font-semibold shadow ${done?"bg-emerald-600 hover:bg-emerald-700":"bg-gray-400 cursor-not-allowed"}`}>
-                                Odeslat
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="space-y-2 text-center">
-                            <div className="text-lg font-semibold">
-                                Správně: {sc}/{round.length} ({Math.round(ratio*100)} %)
-                            </div>
-                            <div className="flex justify-center gap-3">
-                                <button onClick={retry} className="px-5 py-2 rounded-xl bg-slate-300 shadow">Zkusit znovu</button>
-                                <button onClick={()=>onDone(ratio>=minR)}
-                                    className={`px-6 py-2 rounded-xl text-white font-semibold shadow ${ratio>=minR?"bg-emerald-600 hover:bg-emerald-700":"bg-gray-400 cursor-not-allowed"}`}>
-                                    Odemknout
-                                </button>
-                            </div>
-                            {ratio<minR&&<div className="text-sm text-rose-600">Potřebuješ {Math.round(minR*100)} %.</div>}
-                        </div>
-                    )}
+                    <ActionBar>
+                        <ConfirmResetButton onConfirm={()=>{setSeq([]);setHl(Array(len).fill(null));}} />
+                        <button onClick={submit} disabled={seq.length!==len}
+                            className="px-6 py-3 rounded-xl bg-emerald-500 disabled:bg-gray-400 text-white font-semibold shadow">✓</button>
+                    </ActionBar>
                 </div>
             );
         }
 
-        // Cryptex resolver and components
-        function resolveCryptexWheels(assets, lock) {
-            if (lock?.input?.wheels && Array.isArray(lock.input.wheels)) {
-                return lock.input.wheels;
-            }
-            const ref = lock?.input?.wheels_ref;
-            if (ref && assets?.keyboards?.[ref]?.wheels) {
-                return assets.keyboards[ref].wheels;
-            }
-            if (assets?.keyboards?.cryptex?.wheels) {
-                return assets.keyboards.cryptex.wheels;
-            }
-            return ["ABCD", "EFGH", "IJKL", "MNOP"]; // nouzově
-        }
+        // Quiz Lock Component
+        function QuizLock({ lock, onDone }) {
+            const cfg = lock.quiz || lock;
+            const draw = Math.max(1, cfg.draw ?? (cfg.questions?.length || 1));
+            const minR = cfg.min_ratio ?? 0.8;
+            const shufRetry = cfg.shuffle_on_retry ?? true;
+            const shuf = a => [...a].sort(()=>Math.random()-0.5);
 
-        function CryptexWheel({ set, value, onChange }) {
-            const list = Array.isArray(set) ? set : String(set).split("");
-            const idx = Math.max(0, list.indexOf(value));
-            const prev = list[(idx - 1 + list.length) % list.length];
-            const next = list[(idx + 1) % list.length];
+            const make = () => {
+                const qs = shuf(cfg.questions || []).slice(0, draw).map(q => ({
+                    id: q.id || Math.random().toString(36).slice(2),
+                    text: q.text,
+                    answers: shuf((q.answers||[]).map(a=>({
+                        id: a.id || Math.random().toString(36).slice(2),
+                        text: a.text, correct: !!a.correct
+                    })))
+                }));
+                return qs;
+            };
 
-            const up = () => onChange(list[(idx - 1 + list.length) % list.length]);
-            const down = () => onChange(list[(idx + 1) % list.length]);
-
-            return (
-                <div className="flex flex-col items-center mx-1">
-                    <button
-                        onClick={up}
-                        className="w-8 h-6 grid place-items-center rounded-md bg-slate-200 text-slate-700 shadow hover:bg-slate-300"
-                        aria-label="Up"
-                    >
-                        ▲
-                    </button>
-
-                    <div className="w-12 rounded-xl overflow-hidden bg-slate-9
+            const [round, setR] = React.useState(make);
+            const [ans, setA] = React.useState({});
+            const [show, setS] = React.useState(false);
+            const [sc, setSc] = React.useState(0);
+            const pick = (q,a)=>!show&&setA(x=>({...x,[q]:a}));
+            const sub = ()

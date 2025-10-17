@@ -1,4 +1,52 @@
-r-not-allowed text-white font-semibold transition-colors shadow"
+ {/* konkrétní vstup */}
+                        {L.mode === "numeric" && <NumericLock lock={L} onDone={onDone} />}
+                        {L.mode === "text" && <TextLock lock={L} onDone={onDone} />}
+                        {L.mode === "arrows" && <ArrowsLock lock={L} onDone={onDone} />}
+                        {L.mode === "colors" && <ColorsLock lock={L} assets={assets} onDone={onDone} />}
+                        {L.mode === "shapes" && <ShapesLock lock={L} assets={assets} onDone={onDone} />}
+                        {L.mode === "cryptex" && <CryptexLock lock={L} assets={{ keyboards: (assets?.keyboards||{}), ...assets }} onDone={onDone} />}
+                        {L.mode === "quiz" && <QuizLock lock={L} onDone={onDone} />}
+                        {(!L.mode || L.mode === "default") && <TextLock lock={L} onDone={onDone} />}
+                    </div>
+                </div>
+            );
+        }
+
+        // Text Lock Component
+        function TextLock({ lock, onDone, readonly = false, preset = "" }) {
+            const [val, setVal] = useState("");
+            
+            function submit() {
+                const answer = String(lock.answer ?? "");
+                const caseSensitive = !!lock.input?.case_sensitive;
+                const isCorrect = caseSensitive ? 
+                    val === answer : 
+                    val.toUpperCase() === answer.toUpperCase();
+                onDone(isCorrect);
+                setVal("");
+            }
+            
+            function handleKeyPress(e) {
+                if (e.key === 'Enter') {
+                    submit();
+                }
+            }
+            
+            return (
+                <div className="space-y-3">
+                    <input 
+                        value={val} 
+                        onChange={e => setVal(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        className="w-full p-3 rounded-xl bg-white text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow" 
+                        placeholder={lock.input?.placeholder || "Zadej odpověď"}
+                        autoFocus
+                    />
+                    <div className="flex justify-center">
+                        <button 
+                            onClick={submit} 
+                            disabled={!val.trim()}
+                            className="px-6 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-semibold transition-colors shadow"
                         >
                             Odemknout
                         </button>
@@ -21,71 +69,4 @@ r-not-allowed text-white font-semibold transition-colors shadow"
                     <div className="flex flex-wrap justify-center gap-3">
                         {palette.map(c => (
                             <button key={c} onClick={() => onKey(c)}
-                                className="flex flex-col items-center gap-1 px-2 py-2 rounded-xl bg-white shadow"
-                                aria-label={c}>
-                                <span className="w-10 h-10 rounded-lg border border-black/10" style={{backgroundColor: c}} />
-                                {showNames && <span className="text-xs font-semibold text-slate-800">{c}</span>}
-                            </button>
-                        ))}
-                    </div>
-                );
-            }
-
-            if (variant === "shapes") {
-                const shapes = extras?.shapes?.length ? extras.shapes : DEFAULTS.shapes;
-                return (
-                    <div className="flex flex-wrap justify-center gap-2">
-                        {shapes.map(s => (
-                            <button key={s} onClick={() => onKey(s)}
-                                className="px-4 py-3 rounded-xl bg-white text-slate-900 text-2xl font-bold shadow">
-                                {s}
-                            </button>
-                        ))}
-                    </div>
-                );
-            }
-
-            if (variant === "arrows") {
-                return (
-                    <div className="flex justify-center gap-3">
-                        {["↑","↓","←","→"].map(k => (
-                            <button
-                                key={k}
-                                onClick={() => onKey(k)}
-                                className="w-16 h-16 rounded-2xl bg-white shadow grid place-items-center text-3xl font-black hover:scale-105 active:scale-95 transition"
-                            >
-                                {k}
-                            </button>
-                        ))}
-                    </div>
-                );
-            }
-
-            const MAP = {
-                numeric: "1 2 3 4 5 6 7 8 9 0".split(" "),
-                alpha: "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z".split(" "),
-            };
-            const keys = MAP[variant] || [];
-            return (
-                <div className="flex flex-wrap justify-center gap-2">
-                    {keys.map(k => (
-                        <button key={k} onClick={() => onKey(k)}
-                            className="px-4 py-2 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-900 text-base font-semibold shadow">
-                            {k}
-                        </button>
-                    ))}
-                </div>
-            );
-        }
-
-        // Slots Component
-        function Slots({ values, length, highlight = [], status, render }) {
-            const hl = status ?? highlight;   // <- vezmi status, jinak highlight
-            return (
-                <div className="flex justify-center gap-2">
-                    {Array.from({ length }).map((_, i) => {
-                        const v = values[i];
-                        const h = hl[i];
-                        const ring =
-                            h === "ok"
-                                ? "ring-2 ring-emerald-400 
+                                className="flex flex-col items-center gap-1 px-2 

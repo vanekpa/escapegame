@@ -1,91 +1,61 @@
-00 text-white shadow ring-1 ring-white/10 select-none">
-                        <div className="opacity-40 text-sm py-1 text-center">{prev}</div>
-                        <div className="text-xl font-bold py-1 text-center bg-slate-800">{value}</div>
-                        <div className="opacity-40 text-sm py-1 text-center">{next}</div>
-                    </div>
-
-                    <button
-                        onClick={down}
-                        className="w-8 h-6 grid place-items-center rounded-md bg-slate-200 text-slate-700 shadow hover:bg-slate-300 mt-1"
-                        aria-label="Down"
-                    >
-                        ▼
-                    </button>
-                </div>
-            );
-        }
-
-        function CryptexLock({ lock, assets, onDone, readonly = false, preset = [] }) {
-            const rawWheels = resolveCryptexWheels(assets, lock);
-            const sets = rawWheels.map((w) => (Array.isArray(w) ? w : String(w).split("")));
-            const len = Math.min(lock?.input?.length || sets.length, sets.length);
-            const answer = (lock?.answer || []).slice(0, len);
-
-            const [vals, setVals] = React.useState(
-                preset.length ? preset.slice(0, len) : sets.slice(0, len).map((s) => s[0])
-            );
-            const [hl, setHl] = React.useState(Array(len).fill(null));
-
-            const change = (i, val) => setVals((v) => v.map((x, ix) => (ix === i ? val : x)));
-
-            const submit = () => {
-                const correct = JSON.stringify(vals) === JSON.stringify(answer);
-                setHl(vals.map((v, i) => (answer[i] == null ? null : v === answer[i] ? "ok" : "bad")));
-                onDone(correct, vals);
+=>{
+                let s=0; for(const q of round){
+                    const c=q.answers.find(a=>a.correct)?.id;
+                    if(ans[q.id]===c)s++;
+                } setSc(s); setS(true);
             };
-
-            const reset = () => {
-                setVals(sets.slice(0, len).map((s) => s[0]));
-                setHl(Array(len).fill(null));
-            };
+            const retry=()=>{setA({});setS(false);if(shufRetry)setR(make());};
+            const ratio = round.length?sc/round.length:0;
+            const done = Object.keys(ans).length===round.length;
 
             return (
-                <div className="space-y-4" tabIndex={0} onKeyDown={onEnter(submit)}>
-                    {/* horní „okýnka" se zvýrazněním */}
-                    <Slots values={vals} length={len} highlight={hl} />
-
-                    {/* samotné „válce" */}
-                    <div className="flex justify-center">
-                        {Array.from({ length: len }).map((_, i) => (
-                            <CryptexWheel
-                                key={i}
-                                set={sets[i]}
-                                value={vals[i]}
-                                onChange={(v) => !readonly && change(i, v)}
-                            />
+                <div className="space-y-4 text-slate-900">
+                    <div className="text-center font-semibold text-lg text-amber-600">🎃 Mini kvíz</div>
+                    <div className="space-y-5">
+                        {round.map((q,i)=>(
+                            <div key={q.id} className="space-y-3">
+                                <div className="font-semibold">{i+1}. {q.text}</div>
+                                <div className="grid gap-2">
+                                    {q.answers.map((a,j)=>{
+                                        const sel=ans[q.id]===a.id;
+                                        return(
+                                            <button key={a.id} onClick={()=>pick(q.id,a.id)}
+                                                className={`w-full text-left px-4 py-3 rounded-xl border shadow-sm transition 
+                                                ${sel?"border-sky-400 ring-1 ring-sky-300":"border-black/10 hover:border-slate-300 bg-white"}`}>
+                                                <b>{String.fromCharCode(65+j)}.</b> {a.text}
+                                            </button>);
+                                    })}
+                                </div>
+                            </div>
                         ))}
                     </div>
 
-                    {/* ovládací tlačítka */}
-                    <ActionBar>
-                        <ConfirmResetButton onConfirm={reset} />
-                        <button onClick={submit}
-                            className="px-6 py-3 rounded-xl bg-emerald-500 text-white font-semibold shadow hover:bg-emerald-600">✓</button>
-                    </ActionBar>
+                    {!show ? (
+                        <div className="flex justify-center gap-3 pt-2">
+                            <button onClick={retry} className="px-5 py-2 rounded-xl bg-slate-300 shadow">Reset</button>
+                            <button onClick={sub} disabled={!done}
+                                className={`px-6 py-2 rounded-xl text-white font-semibold shadow ${done?"bg-emerald-600 hover:bg-emerald-700":"bg-gray-400 cursor-not-allowed"}`}>
+                                Odeslat
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-2 text-center">
+                            <div className="text-lg font-semibold">
+                                Správně: {sc}/{round.length} ({Math.round(ratio*100)} %)
+                            </div>
+                            <div className="flex justify-center gap-3">
+                                <button onClick={retry} className="px-5 py-2 rounded-xl bg-slate-300 shadow">Zkusit znovu</button>
+                                <button onClick={()=>onDone(ratio>=minR)}
+                                    className={`px-6 py-2 rounded-xl text-white font-semibold shadow ${ratio>=minR?"bg-emerald-600 hover:bg-emerald-700":"bg-gray-400 cursor-not-allowed"}`}>
+                                    Odemknout
+                                </button>
+                            </div>
+                            {ratio<minR&&<div className="text-sm text-rose-600">Potřebuješ {Math.round(minR*100)} %.</div>}
+                        </div>
+                    )}
                 </div>
             );
         }
 
-        // Author Badge Component
-        function AuthorBadge({ game }) {
-            const a = game?.meta?.author;
-            if (!a) return null;
-            const pos = a.position === "bottom-right" ? "bottom-2 right-2" : "bottom-2 left-2";
-            const [expanded, setExpanded] = React.useState(false);
-
-            const handleClick = (e) => {
-                e.preventDefault();
-                if (!expanded) {
-                    setExpanded(true);
-                    return;
-                }
-                if (a.url) window.open(a.url, "_blank", "noopener,noreferrer");
-            };
-
-            return (
-                <a
-                    href={a.url || "#"}
-                    onClick={handleClick}
-                    className={`fixed ${pos} z-40 flex items-center gap-2 bg-white/75 hover:bg-white/90
-                              backdrop-blur rounded-full shadow px-2 py-1 transition-transform
-                   
+        // Cryptex resolver and components
+        function

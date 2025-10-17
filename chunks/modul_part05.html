@@ -1,4 +1,59 @@
-text-white">
+to text-[20px] leading-8 text-slate-800">{content}</div>
+                </div>
+              </div>)}
+          </>);
+        }
+
+        // ActionBar Component
+        function ActionBar({children}) {
+          return (
+            <div className="sticky bottom-0 left-0 right-0 mt-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]
+                            bg-gradient-to-t from-white/95 to-white/0 backdrop-blur flex justify-center">
+              <div className="flex gap-3">{children}</div>
+            </div>
+          );
+        }
+
+        // Helper functions
+        function shuffle(arr){
+            const a = arr.slice();
+            for (let i=a.length-1;i>0;i--){
+                const j = Math.floor(Math.random()*(i+1));
+                [a[i],a[j]] = [a[j],a[i]];
+            }
+            return a;
+        }
+
+        const useEnterTo = (fn) => {
+            React.useEffect(() => {
+                const h = (e) => { if (e.key === "Enter") fn(); };
+                window.addEventListener("keydown", h);
+                return () => window.removeEventListener("keydown", h);
+            }, [fn]);
+        };
+
+        const useEnter = (cb) => React.useCallback((e)=>{ if(e.key==="Enter") cb(); },[cb]);
+
+        function onEnter(handler) {
+            return (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    handler();
+                }
+            };
+        }
+
+        const statusByPosition = (given=[], answer=[]) =>
+            answer.map((a,i) => (given[i] == null ? null : (given[i] === a ? "ok" : "bad")));
+
+        // Lock Router Component
+        function LockRouter({ lock, assets, info, onDone, solved }) {
+            const L = lock || {};
+            
+            if (solved) {
+                return (
+                    <div className="mx-auto max-w-[760px] text-center text-slate-800">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600/90 shadow text-white">
                             <span>✅</span><span className="font-semibold">Odemčeno</span>
                         </div>
                         <div className="mt-3">
@@ -27,52 +82,4 @@ text-white">
                             </div>
                         )}
 
-                        {/* konkrétní vstup */}
-                        {L.mode === "numeric" && <NumericLock lock={L} onDone={onDone} />}
-                        {L.mode === "text" && <TextLock lock={L} onDone={onDone} />}
-                        {L.mode === "arrows" && <ArrowsLock lock={L} onDone={onDone} />}
-                        {L.mode === "colors" && <ColorsLock lock={L} assets={assets} onDone={onDone} />}
-                        {L.mode === "shapes" && <ShapesLock lock={L} assets={assets} onDone={onDone} />}
-                        {L.mode === "cryptex" && <CryptexLock lock={L} assets={{ keyboards: (assets?.keyboards||{}), ...assets }} onDone={onDone} />}
-                        {L.mode === "quiz" && <QuizLock lock={L} onDone={onDone} />}
-                        {(!L.mode || L.mode === "default") && <TextLock lock={L} onDone={onDone} />}
-                    </div>
-                </div>
-            );
-        }
-
-        // Text Lock Component
-        function TextLock({ lock, onDone, readonly = false, preset = "" }) {
-            const [val, setVal] = useState("");
-            
-            function submit() {
-                const answer = String(lock.answer ?? "");
-                const caseSensitive = !!lock.input?.case_sensitive;
-                const isCorrect = caseSensitive ? 
-                    val === answer : 
-                    val.toUpperCase() === answer.toUpperCase();
-                onDone(isCorrect);
-                setVal("");
-            }
-            
-            function handleKeyPress(e) {
-                if (e.key === 'Enter') {
-                    submit();
-                }
-            }
-            
-            return (
-                <div className="space-y-3">
-                    <input 
-                        value={val} 
-                        onChange={e => setVal(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        className="w-full p-3 rounded-xl bg-white text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow" 
-                        placeholder={lock.input?.placeholder || "Zadej odpověď"}
-                        autoFocus
-                    />
-                    <div className="flex justify-center">
-                        <button 
-                            onClick={submit} 
-                            disabled={!val.trim()}
-                            className="px-6 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-500 disabled:curso
+                       
