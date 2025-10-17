@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escape Game</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --bg-grad: radial-gradient(40% 45% at 12% 10%, #FFEDD5 0%, rgba(255,237,213,0) 60%),
+                       radial-gradient(35% 40% at 88% 12%, #E9D5FF 0%, rgba(233,213,255,0) 60%),
+                       radial-gradient(55% 55% at 50% 95%, #BAE6FD 0%, rgba(186,230,253,0) 60%),
+                       linear-gradient(180deg, #FDF2F8 0%, #EEF2FF 100%);
+        }
+        html,body{ height:100% }
+        body{
+            box-sizing:border-box;
+            font-family:"Fredoka", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-grad) fixed;
+        }
+        @keyframes fadein { from{opacity:0} to{opacity:1} }
+        .fade { animation: fadein .35s ease both; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script>
+        window.addEventListener("error", (e) => {
+            const pre = document.createElement("pre");
+            pre.style.cssText = "position:fixed;bottom:0;left:0;max-width:100vw;max-height:40vh;overflow:auto;margin:0;padding:12px;background:#111;color:#f44;z-index:99999";
+            pre.textContent = "JS error: " + e.message + "\n" + (e.filename||"") + ":" + (e.lineno||"") + ":" + (e.colno||"");
+            document.body.appendChild(pre);
+        });
+    </script>
+
+    <script type="text/babel" data-presets="env,react">
+        const { useState, useEffect, useMemo } = React;
+
+        // Types
+        const GAME_JSON_URL = "https://raw.githubusercontent.com/vanekpa/canvaveskole/main/game1.json";
+
+        // Icon inference functions
+        function inferIconKey(page){
+            if(page?.ui?.icon) return page.ui.icon;
+            if(page?.type==="lock") return "lock";
+            if(page?.type==="info") return (page?.ui?.icon==="win" ? "win" : "story");
+            return "lock";
+        }
+
+        function deriveNavSteps(pages, loseId){
+            return (pages||[])
+                .filter(p=>p?.id && p.id!==loseId && inferIconKey(p)!=="lose")
+                .map(p=>({ id:p.id, iconKey: inferIconKey(p) }));
+        }
+
+        // Progress Rail Component
+        const ICONS = { 
+            story:"📖", 
+            lock:"🔒", 
+            win:"🏆", 
+            lose:"⏰" 
+        };
+
+        function ProgressRail({ steps, currentId, onStepClick, showTimer=false, timeLeft=0, warnAt=30 }) {
+            const mm = Math.floor(timeLeft/60).toString().padStart(2,"0");
+            const ss = (timeLeft%60).toString().padStart(2,"0");
+            const warn = timeLeft > 0 && timeLeft <= warnAt;
+            const currentIndex = Math.max(0, steps.findIndex(s => s.id === currentId));
+            return (
+                <div className="fixed top-0 left-0 right-0 z-30">
+                    <div className="mx-auto max-w-[1000px] px-3 py-2 rounded-b-3xl backdrop-blur
+                          bg-white/50 shadow-lg border-b border-white/40 flex items-center gap-2">
+                        {steps.map((s, i) => {
+                            const state = i === currentIndex ? "current" : i < currentIndex ? "done" : "locked";
+                            const clickable = i <= currentIndex;
+                            const cls =
+                                state === "current" ? "bg-amber-300 text-slate-900 cursor-pointer"
+                                : state === "done" ? "bg-emerald-400 text-white hover:opacity-90 cursor-pointer"
+                                : "bg-slate-300/60 text-slate-700 cursor-not-allowed";
+                            return (
+                                <button
+                                    key={s.id}
+                                    type="button"
+                                    onClick={() => clickable && onStepClick?.(s.id)}
+                                    className={`px-3 py-1.5 rounded-full text-sm font-bold flex items-center gap-1 shadow ${cls}`}
+                                >
+                                    <span>{ICONS[s.iconKey] || "🔒"}</span>
+                                    <span className="hidden sm:inline">{s.iconKey}</span>
+                                </button>
+                            );
+                        })}
+
+                        {/* mezera a timer napravo */}
+                        <div className="ml-auto" />
+                        {showTimer && (
+                            <div className={`px-3 py-1.5 rounded-full text-sm font-bold shadow
+                                             ${warn ? "bg-rose-500 text-white animate-pulse"
+                                                    : "bg-slate-800 text-white/95"}`}>
+                                ⏰ {mm}:{ss}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // Bottom Dock Component
+        function BottomDock({ children, size="compact" }) {
+            const cls = size === "expanded"
+                ? "max-h-[62vh] sm:max-h-[55vh]"   // víc místa pro velké klávesnice
+                : "max-h-[42vh] sm:max-h-[36vh]";
+            return (
+                <div className="fixed bottom-0 left-0 right-0 z-20">
+                    <div className={`mx-auto max-w-[1000px] ${cls} overflow-y-auto
+                        rounded-t-[26px] bg-white/80 backdrop-blur-md
+                        shadow-[0_-20px_60px_rgba(0,0,0,.25)] border-t border-black/10 p-4`}>
+                        {children}
+                    </div>
+                </div>
+            );
+        }
+
+        // Info Bubble Component
+        function InfoBubble({ info, onContinue }) {
+            const i = info || {};
+            const desc = i.description || i.text || i.story || "";
+            return (
+                <div className="max-w-xl w-full bg-black/45 backdrop-blur rounded-2xl p-5 text-white text-center">
+                    {i.title && <h1 className="text-2xl font-semibold mb-2">{i.title}</h1>}
+                    {desc && <p className="text-base opacity-90">{desc}</p>}
+                    <button
+                        onClick={onContinue}
+                        className="mt-4 inline-flex px-6 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600"
+                    >
+                        Pokračovat
+                    </button>
+                </div>
+            );
+        }
+
+        // Scene: obrázek vždy celý (letterbox), přepínání více obrázků z background_imgs
+        function Scene({ page, assets, onResolve, solved, dockSize = "compact" }) {
+            const BASE = "./";
+            const resolveImg = (p) => (p && !/^https?:\/\//.test(p) ? BASE + p : p);
+
+            const imgs = (page?.ui?.background_imgs?.length
+                ? page.ui.background_imgs
+                : page?.ui?.background_img ? [page.ui.background_img] : []
+            ).map(resolveImg);
+
+            const [idx, setIdx] = React.useState(0);
+            const cur = imgs[idx] || null;
+
+            // --- nové ovladače vzhledu z JSON ---
+            const isInfo = page?.type === "info";
+            const fullBleed = !!page?.ui?.full_bleed && isInfo;
+            const darken = typeof page?.ui?.darken === "number"
+                ? page.ui.darken
+                : (isInfo ? 0.05 : 0.25); // defaulty
+
+            // výška "plátna"
+            const VIEW_H = fullBleed ? "82vh" : "60vh";
+
+            // opožděné odhalení obsahu (bublina + dock)
+            const revealMs = page?.ui?.reveal_ms ?? 0;
+            const [revealed, setRevealed] = React.useState(revealMs === 0);
+            React.useEffect(() => {
+                if (revealMs > 0) {
+                    setRevealed(false);
+                    const t = setTimeout(() => setRevealed(true), revealMs);
+                    return () => clearTimeout(t);
+                } else {
+                    setRevealed(true);
+                }
+            }, [page?.id]); // při každé nové stránce
+
+            return (
+                <div className="relative min-h-screen">
+                    <div className="absolute left-0 right-0 top-0" style={{ height: VIEW_H }}>
+                        {cur ? (
+                            <img src={cur} alt="" className="w-full h-full" style={{ objectFit:"contain", objectPosition:"center" }}/>
+                        ) : <div className="w-full h-full bg-slate-900" />}
+
+                        {imgs.length > 1 && (
+                            <>
+                                <button
+                                    onClick={() => setIdx(i => (i - 1 + imgs.length) % imgs.length)}
+                                    className="absolute top-1/2 -translate-y-1/2 left-2 sm:left-4 z-10
+                                               w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/40 text-white
+                                               grid place-items-center shadow hover:bg-black/55"
+                                    aria-label="Předchozí obrázek"
+                                >
+                                    ◀
+                                </button>
+                                <button
+                                    onClick={() => setIdx(i => (i + 1) % imgs.length)}
+                                    className="absolute top-1/2 -translate-y-1/2 right-2 sm:right-4 z-10
+                                               w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/40 text-white
+                                               grid place-items-center shadow hover:bg-black/55"
+                                    aria-label="Další obrázek"
+                                >
+                                    ▶
+                                </button>
+                                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                                    {imgs.map((_, i) => (
+                                        <button key={i} onClick={() => setIdx(i)}
+                                                className={`w-2 h-2 rounded-full ${i===idx?"bg-white":"bg-white/40"}`} />
+                                    ))}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* overlay – míra ztmavení z JSON */}
+                    <div className="absolute left-0 right-0 top-0 pointer-events-none"
+                         style={{ height: VIEW_H, background:`rgba(0,0,0,${darken})` }} />
+
+                    {/* titulek scény */}
+                    {page?.info?.title && (
+                        <div className="absolute top-2 left-0 right-0 p-3 flex justify-center">
+                            <div className="px-3 py-1 rounded-full bg-black/40 text-white text-sm backdrop-blur">
+                                {page.info.title}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* info bublina – zobraz až po reveal_ms */}
+                    {isInfo && revealed && (
+                        <div className="absolute left-0 right-0 flex justify-center p-6"
+                             style={{ top:`calc(${VIEW_H}/2)`, transform:"translateY(-50%)" }}>
+                            <InfoBubble info={page.info} onContinue={() => onResolve(true)} />
+                        </div>
+                    )}
+
+                    {/* spodní dock – taky až po reveal_ms */}
+                    {revealed && (
+                        <BottomDock size={dockSize}>
+                            {page?.type==="lock" && (
+                                <LockRouter lock={page.lock} assets={assets} info={page.info}
+                                            onDone={onResolve} solved={solved} />
+                            )}
+                        </BottomDock>
+                    )}
+                </div>
+            );
+        }
+
+        // Confirm Reset Button Component
+        function ConfirmResetButton({onConfirm,className=""}) {
+          const [armed,setArmed]=React.useState(false);
+          React.useEffect(()=>{ if(!armed)return; const id=setTimeout(()=>setArmed(false),1500); return()=>clearTimeout(id);},[armed]);
+          return (
+            <button onClick={()=>armed?onConfirm():setArmed(true)}
+              className={`${className} px-5 py-3 rounded-xl shadow ${armed?"bg-rose-500 text-white":"bg-slate-300 text-slate-900"}`}>
+              {armed?"Klikni znovu":"Reset"}
+            </button>
+          );
+        }
+
+        // ZoomHint Component
+        function ZoomHint({ title="Text", content="" }) {
+          const [open,setOpen]=React.useState(false);
+          return (<>
+            <button onClick={()=>setOpen(true)} title="Zvětšit"
+              className="ml-2 inline-flex items-center justify-center w-7 h-7 rounded-md bg-slate-200 text-slate-700 shadow">🔎</button>
+            {open&&(
+              <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm grid place-items-center p-4">
+                <div className="w-full max-w-[720px] bg-white rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="px-4 py-3 border-b flex justify-between items-center">
+                    <h3 className="text-lg font-bold text-slate-800">{title}</h3>
+                    <button onClick={()=>setOpen(false)} className="px-3 py-1.5 rounded-md bg-slate-100 text-slate-700 text-sm">Zavřít</button>
+                  </div>
+                  <div className="p-4 max-h-[70vh] overflow-auto text-[20px] leading-8 text-slate-800">{content}</div>
+                </div>
+              </div>)}
+          </>);
+        }
+
+        // ActionBar Component
+        function ActionBar({children}) {
+          return (
+            <div className="sticky bottom-0 left-0 right-0 mt-4 pt-3 pb-[max(12px,env(safe-area-inset-bottom))]
+                            bg-gradient-to-t from-white/95 to-white/0 backdrop-blur flex justify-center">
+              <div className="flex gap-3">{children}</div>
+            </div>
+          );
+        }
+
+        // Helper functions
+        function shuffle(arr){
+            const a = arr.slice();
+            for (let i=a.length-1;i>0;i--){
+                const j = Math.floor(Math.random()*(i+1));
+                [a[i],a[j]] = [a[j],a[i]];
+            }
+            return a;
+        }
+
+        const useEnterTo = (fn) => {
+            React.useEffect(() => {
+                const h = (e) => { if (e.key === "Enter") fn(); };
+                window.addEventListener("keydown", h);
+                return () => window.removeEventListener("keydown", h);
+            }, [fn]);
+        };
+
+        const useEnter = (cb) => React.useCallback((e)=>{ if(e.key==="Enter") cb(); },[cb]);
+
+        function onEnter(handler) {
+            return (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    handler();
+                }
+            };
+        }
+
+        const statusByPosition = (given=[], answer=[]) =>
+            answer.map((a,i) => (given[i] == null ? null : (given[i] === a ? "ok" : "bad")));
+
+        // Lock Router Component
+        function LockRouter({ lock, assets, info, onDone, solved }) {
+            const L = lock || {};
+            
+            if (solved) {
+                return (
+                    <div className="mx-auto max-w-[760px] text-center text-slate-800">
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600/90 shadow text-white">
+                            <span>✅</span><span className="font-semibold">Odemčeno</span>
+                        </div>
+                        <div className="mt-3">
+                            <button onClick={() => onDone(true)} className="px-6 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 font-semibold text-white">
+                                Pokračovat
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+            return (
+                <div className="mx-auto max-w-[760px]">
+                    <div className="text-slate-800">
+                        {/* HLAVIČKA + LUPA */}
+                        <div className="flex items-center justify-center gap-2 mb-1 text-amber-600">
+                            <span>🔒</span>
+                            <h2 className="text-base sm:text-lg font-semibold">
+                                {info?.title || "Zámek"}
+                            </h2>
+                            <ZoomHint title={info?.title||"Text"} content={(info?.description||info?.text||L.hint||"").toString()} />
+                        </div>
+                        
+                        {L.hint && (
+                            <div className="mb-2 text-[11px] sm:text-xs tracking-wide text-slate-700 bg-amber-100/80 rounded-md px-3 py-1.5">
+                                💡 {L.hint}
+                            </div>
+                        )}
+
+                        {/* konkrétní vstup */}
+                        {L.mode === "numeric" && <NumericLock lock={L} onDone={onDone} />}
+                        {L.mode === "text" && <TextLock lock={L} onDone={onDone} />}
+                        {L.mode === "arrows" && <ArrowsLock lock={L} onDone={onDone} />}
+                        {L.mode === "colors" && <ColorsLock lock={L} assets={assets} onDone={onDone} />}
+                        {L.mode === "shapes" && <ShapesLock lock={L} assets={assets} onDone={onDone} />}
+                        {L.mode === "cryptex" && <CryptexLock lock={L} assets={{ keyboards: (assets?.keyboards||{}), ...assets }} onDone={onDone} />}
+                        {L.mode === "quiz" && <QuizLock lock={L} onDone={onDone} />}
+                        {(!L.mode || L.mode === "default") && <TextLock lock={L} onDone={onDone} />}
+                    </div>
+                </div>
+            );
+        }
+
+        // Text Lock Component
+        function TextLock({ lock, onDone, readonly = false, preset = "" }) {
+            const [val, setVal] = useState("");
+            
+            function submit() {
+                const answer = String(lock.answer ?? "");
+                const caseSensitive = !!lock.input?.case_sensitive;
+                const isCorrect = caseSensitive ? 
+                    val === answer : 
+                    val.toUpperCase() === answer.toUpperCase();
+                onDone(isCorrect);
+                setVal("");
+            }
+            
+            function handleKeyPress(e) {
+                if (e.key === 'Enter') {
+                    submit();
+                }
+            }
+            
+            return (
+                <div className="space-y-3">
+                    <input 
+                        value={val} 
+                        onChange={e => setVal(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        className="w-full p-3 rounded-xl bg-white text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow" 
+                        placeholder={lock.input?.placeholder || "Zadej odpověď"}
+                        autoFocus
+                    />
+                    <div className="flex justify-center">
+                        <button 
+                            onClick={submit} 
+                            disabled={!val.trim()}
+                            className="px-6 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-semibold transition-colors shadow"
+                        >
+                            Odemknout
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Soft Keyboard Component
+        function SoftKeyboard({ variant, onKey, extras }) {
+            const DEFAULTS = {
+                colors: ["red","orange","yellow","green","blue","purple","pink","brown"],
+                shapes: ["◯","■","▲","★","❤","◆"]
+            };
+
+            if (variant === "colors") {
+                const palette = extras?.colors?.length ? extras.colors : DEFAULTS.colors;
+                const showNames = !!extras?.show_names;
+                return (
+                    <div className="flex flex-wrap justify-center gap-3">
+                        {palette.map(c => (
+                            <button key={c} onClick={() => onKey(c)}
+                                className="flex flex-col items-center gap-1 px-2 py-2 rounded-xl bg-white shadow"
+                                aria-label={c}>
+                                <span className="w-10 h-10 rounded-lg border border-black/10" style={{backgroundColor: c}} />
+                                {showNames && <span className="text-xs font-semibold text-slate-800">{c}</span>}
+                            </button>
+                        ))}
+                    </div>
+                );
+            }
+
+            if (variant === "shapes") {
+                const shapes = extras?.shapes?.length ? extras.shapes : DEFAULTS.shapes;
+                return (
+                    <div className="flex flex-wrap justify-center gap-2">
+                        {shapes.map(s => (
+                            <button key={s} onClick={() => onKey(s)}
+                                className="px-4 py-3 rounded-xl bg-white text-slate-900 text-2xl font-bold shadow">
+                                {s}
+                            </button>
+                        ))}
+                    </div>
+                );
+            }
+
+            if (variant === "arrows") {
+                return (
+                    <div className="flex justify-center gap-3">
+                        {["↑","↓","←","→"].map(k => (
+                            <button
+                                key={k}
+                                onClick={() => onKey(k)}
+                                className="w-16 h-16 rounded-2xl bg-white shadow grid place-items-center text-3xl font-black hover:scale-105 active:scale-95 transition"
+                            >
+                                {k}
+                            </button>
+                        ))}
+                    </div>
+                );
+            }
+
+            const MAP = {
+                numeric: "1 2 3 4 5 6 7 8 9 0".split(" "),
+                alpha: "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z".split(" "),
+            };
+            const keys = MAP[variant] || [];
+            return (
+                <div className="flex flex-wrap justify-center gap-2">
+                    {keys.map(k => (
+                        <button key={k} onClick={() => onKey(k)}
+                            className="px-4 py-2 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-900 text-base font-semibold shadow">
+                            {k}
+                        </button>
+                    ))}
+                </div>
+            );
+        }
+
+        // Slots Component
+        function Slots({ values, length, highlight = [], status, render }) {
+            const hl = status ?? highlight;   // <- vezmi status, jinak highlight
+            return (
+                <div className="flex justify-center gap-2">
+                    {Array.from({ length }).map((_, i) => {
+                        const v = values[i];
+                        const h = hl[i];
+                        const ring =
+                            h === "ok"
+                                ? "ring-2 ring-emerald-400 bg-emerald-50"
+                                : h === "bad"
+                                ? "ring-2 ring-rose-400 bg-rose-50"
+                                : "ring-1 ring-black/10";
+                        return (
+                            <div
+                                key={i}
+                                className={
+                                    "w-12 h-14 grid place-items-center rounded-xl bg-white text-slate-900 text-xl font-bold shadow " +
+                                    ring
+                                }
+                            >
+                                {render ? render(v) : v ?? ""}
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        // Numeric Lock Component
+        function NumericLock({ lock, onDone }) {
+            const len = lock.input?.length ?? 4;
+            const [val, setVal] = useState("");
+            const [showStatus, setShowStatus] = useState(false);
+            
+            const submit = () => {
+                setShowStatus(true);
+                onDone(val === String(lock.answer ?? ""));
+                // NEmažeme hodnotu – necháme čísla zůstat, aby šlo vidět ok/špatně
+            };
+            
+            useEnterTo(submit);
+            
+            return (
+                <div className="space-y-3">
+                    <Slots 
+                        values={val.split("")} 
+                        length={len} 
+                        status={showStatus ? statusByPosition(val.split(""), String(lock.answer ?? "").split("")) : []}
+                    />
+                    <SoftKeyboard variant="numeric" onKey={(d) => val.length < len && setVal(v => v + d)} />
+                    <ActionBar>
+                        <button onClick={()=>{setVal(v=>v.slice(0,-1));setShowStatus(false);}}
+                            className="px-5 py-3 rounded-xl bg-slate-300 text-slate-900 font-semibold shadow">⌫ Zpět</button>
+                        <ConfirmResetButton onConfirm={()=>{setVal("");setShowStatus(false);}} />
+                        <button onClick={submit} disabled={val.length!==len}
+                            className="px-6 py-3 rounded-xl bg-emerald-500 disabled:bg-gray-400 text-white font-semibold shadow">✓</button>
+                    </ActionBar>
+                </div>
+            );
+        }
+
+        // Arrows Lock Component
+        function ArrowsLock({ lock, onDone }) {
+            const len = lock.input?.length ?? (lock.answer?.length || 4);
+            const [seq, setSeq] = useState([]);
+            const [showStatus, setShowStatus] = useState(false);
+
+            const submit = () => {
+                setShowStatus(true);
+                onDone(JSON.stringify(seq) === JSON.stringify(lock.answer || []));
+            };
+            
+            useEnterTo(submit);
+
+            return (
+                <div className="space-y-3">
+                    <Slots 
+                        values={seq} 
+                        length={len} 
+                        status={showStatus ? statusByPosition(seq, lock.answer || []) : []}
+                    />
+
+                    <SoftKeyboard
+                        variant="arrows"
+                        onKey={(k) => seq.length < len && setSeq((s) => [...s, k])}
+                    />
+
+                    <ActionBar>
+                        <ConfirmResetButton onConfirm={()=>{setSeq([]);setShowStatus(false);}} />
+                        <button onClick={submit} disabled={seq.length!==len}
+                            className="px-6 py-3 rounded-xl bg-emerald-500 disabled:bg-gray-400 text-white font-semibold shadow">✓</button>
+                    </ActionBar>
+                </div>
+            );
+        }
+
+        // Colors Lock Component
+        function ColorsLock({ lock, assets, onDone }) {
+            const len = lock.input?.length ?? lock.answer?.length ?? 4;
+            const palette = (assets?.colors?.length ? assets.colors : ["red","orange","yellow","green","blue","purple","pink","brown"]).slice(0,8);
+            const [seq, setSeq] = useState([]);
+            const normalizedAnswer = (lock.answer || []).map(s => s.toLowerCase());
+            const normalizedSeq = seq.map(s => s.toLowerCase());
+            const [showStatus, setShowStatus] = useState(false);
+
+            const submit = () => {
+                setShowStatus(true);
+                onDone(JSON.stringify(normalizedSeq) === JSON.stringify(normalizedAnswer));
+            };
+            useEnterTo(submit);
+
+            return (
+                <div className="space-y-4">
+                    <Slots
+                        values={Array(len).fill(null).map((_, i) => seq[i] ?? null)}
+                        length={len}
+                        render={(c) => c ? <span className="w-10 h-10 rounded-xl inline-block" style={{backgroundColor: c}} /> : ""}
+                        status={showStatus ? statusByPosition(normalizedSeq, normalizedAnswer) : []}
+                    />
+                    <div className="flex flex-wrap justify-center gap-4 mt-2">
+                        {palette.map(c => (
+                            <button key={c} onClick={() => seq.length < len && setSeq(s => [...s, c])}
+                                className="w-16 h-16 rounded-2xl bg-white p-1 shadow hover:scale-105 transition"
+                                aria-label={c}>
+                                <span className="block w-full h-full rounded-xl" style={{backgroundColor: c}} />
+                            </button>
+                        ))}
+                    </div>
+                    <ActionBar>
+                        <ConfirmResetButton onConfirm={()=>{setSeq([]);setShowStatus(false);}} />
+                        <button onClick={submit} disabled={seq.length!==len}
+                            className="px-6 py-3 rounded-xl bg-emerald-500 disabled:bg-gray-400 text-white font-semibold shadow">✓</button>
+                    </ActionBar>
+                </div>
+            );
+        }
+
+        // Shape aliases for old JSON compatibility
+        const SHAPE_ALIASES = {
+            "◯":"circle", "●":"circle",
+            "■":"square", "□":"square",
+            "▲":"triangle", "△":"triangle",
+            "★":"star",
+            "❤":"heart", "♥":"heart",
+            "◆":"diamond", "◇":"diamond"
+        };
+
+        // SVG shape library (simple, child-friendly)
+        const SHAPE_SVGS = {
+            circle:  (<circle cx="24" cy="24" r="18" />),
+            square:  (<rect x="8" y="8" width="32" height="32" rx="6" ry="6" />),
+            triangle:(<path d="M24 6 L42 40 H6 Z" />),
+            star:    (<path d="M24 5 l6.9 12.9 14.1 2.1-10.2 9.9 2.4 14.1L24 38.6 8.8 44l2.4-14.1L1 20 15.1 17.9z" />),
+            heart:   (<path d="M24 42s-14-8.6-14-18c0-5.5 4.5-10 10-10 3 0 5.7 1.3 7.5 3.5C29.3 15.3 32 14 35 14c5.5 0 10 4.5 10 10 0 9.4-14 18-14 18z" />),
+            diamond: (<path d="M24 4 L44 24 24 44 4 24 Z" />),
+            hex:     (<path d="M12 8 L36 8 L44 24 L36 40 L12 40 L4 24 Z" />),
+            clover:  (<path d="M24 22c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z M24 22c4.4 0 8-3.6 8-8s-3.6-8-8-8-8 3.6-8 8 3.6 8 8 8z M24 22c0-4.4-3.6-8-8-8s-8 3.6-8 8 3.6 8 8 8 8-3.6 8-8z M24 22c0 4.4-3.6 8-8 8s-8-3.6-8-8 3.6-8 8-8 8 3.6 8 8z M24 22v18" />),
+        };
+
+        // Default shapes when not in assets
+        const SHAPES_DEFAULT = ["◯","■","▲","★","❤","◆","hex","clover"];
+
+        function PrettyShape({ s }) {
+            const key = SHAPE_ALIASES[s] || s; // convert "◯" -> "circle" etc.
+            const svg = SHAPE_SVGS[key];
+            if (!svg) {
+                // fallback: original character
+                return <span className="text-[28px] sm:text-[32px]">{s}</span>;
+            }
+            return (
+                <svg viewBox="0 0 48 48" className="w-8 h-8 sm:w-10 sm:h-10" fill="#111">
+                    {svg}
+                </svg>
+            );
+        }
+
+        // Shapes Lock Component
+        function ShapesLock({ lock, assets, onDone, readonly=false, preset=[] }) {
+            const shapes = assets?.shapes?.length ? assets.shapes : SHAPES_DEFAULT;
+            const len = lock.input?.length ?? lock.answer?.length ?? 3;
+            const [seq,setSeq] = React.useState(preset);
+            const [hl,setHl] = React.useState(Array(len).fill(null));
+            const submit=()=>{
+                const ans = lock.answer||[];
+                const h = seq.map((v,i)=> (v===ans[i] ? "ok":"bad"));
+                setHl(h); onDone(JSON.stringify(seq)===JSON.stringify(ans));
+            };
+            return (
+                <div className="space-y-4" onKeyDown={useEnter(submit)} tabIndex={0}>
+                    <Slots values={seq} length={len} highlight={hl} render={(v)=> v? <PrettyShape s={v}/>:""}/>
+                    <div className="flex flex-wrap justify-center gap-3">
+                        {shapes.map(s=>(
+                            <button key={s} onClick={()=> seq.length<len && setSeq(a=>[...a,s])} disabled={readonly}
+                                className="w-14 h-14 rounded-2xl bg-white grid place-items-center text-slate-800 shadow hover:scale-105 active:scale-95 transition">
+                                <PrettyShape s={s}/>
+                            </button>
+                        ))}
+                    </div>
+                    <ActionBar>
+                        <ConfirmResetButton onConfirm={()=>{setSeq([]);setHl(Array(len).fill(null));}} />
+                        <button onClick={submit} disabled={seq.length!==len}
+                            className="px-6 py-3 rounded-xl bg-emerald-500 disabled:bg-gray-400 text-white font-semibold shadow">✓</button>
+                    </ActionBar>
+                </div>
+            );
+        }
+
+        // Quiz Lock Component
+        function QuizLock({ lock, onDone }) {
+            const cfg = lock.quiz || lock;
+            const draw = Math.max(1, cfg.draw ?? (cfg.questions?.length || 1));
+            const minR = cfg.min_ratio ?? 0.8;
+            const shufRetry = cfg.shuffle_on_retry ?? true;
+            const shuf = a => [...a].sort(()=>Math.random()-0.5);
+
+            const make = () => {
+                const qs = shuf(cfg.questions || []).slice(0, draw).map(q => ({
+                    id: q.id || Math.random().toString(36).slice(2),
+                    text: q.text,
+                    answers: shuf((q.answers||[]).map(a=>({
+                        id: a.id || Math.random().toString(36).slice(2),
+                        text: a.text, correct: !!a.correct
+                    })))
+                }));
+                return qs;
+            };
+
+            const [round, setR] = React.useState(make);
+            const [ans, setA] = React.useState({});
+            const [show, setS] = React.useState(false);
+            const [sc, setSc] = React.useState(0);
+            const pick = (q,a)=>!show&&setA(x=>({...x,[q]:a}));
+            const sub = ()=>{
+                let s=0; for(const q of round){
+                    const c=q.answers.find(a=>a.correct)?.id;
+                    if(ans[q.id]===c)s++;
+                } setSc(s); setS(true);
+            };
+            const retry=()=>{setA({});setS(false);if(shufRetry)setR(make());};
+            const ratio = round.length?sc/round.length:0;
+            const done = Object.keys(ans).length===round.length;
+
+            return (
+                <div className="space-y-4 text-slate-900">
+                    <div className="text-center font-semibold text-lg text-amber-600">🎃 Mini kvíz</div>
+                    <div className="space-y-5">
+                        {round.map((q,i)=>(
+                            <div key={q.id} className="space-y-3">
+                                <div className="font-semibold">{i+1}. {q.text}</div>
+                                <div className="grid gap-2">
+                                    {q.answers.map((a,j)=>{
+                                        const sel=ans[q.id]===a.id;
+                                        return(
+                                            <button key={a.id} onClick={()=>pick(q.id,a.id)}
+                                                className={`w-full text-left px-4 py-3 rounded-xl border shadow-sm transition 
+                                                ${sel?"border-sky-400 ring-1 ring-sky-300":"border-black/10 hover:border-slate-300 bg-white"}`}>
+                                                <b>{String.fromCharCode(65+j)}.</b> {a.text}
+                                            </button>);
+                                    })}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {!show ? (
+                        <div className="flex justify-center gap-3 pt-2">
+                            <button onClick={retry} className="px-5 py-2 rounded-xl bg-slate-300 shadow">Reset</button>
+                            <button onClick={sub} disabled={!done}
+                                className={`px-6 py-2 rounded-xl text-white font-semibold shadow ${done?"bg-emerald-600 hover:bg-emerald-700":"bg-gray-400 cursor-not-allowed"}`}>
+                                Odeslat
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="space-y-2 text-center">
+                            <div className="text-lg font-semibold">
+                                Správně: {sc}/{round.length} ({Math.round(ratio*100)} %)
+                            </div>
+                            <div className="flex justify-center gap-3">
+                                <button onClick={retry} className="px-5 py-2 rounded-xl bg-slate-300 shadow">Zkusit znovu</button>
+                                <button onClick={()=>onDone(ratio>=minR)}
+                                    className={`px-6 py-2 rounded-xl text-white font-semibold shadow ${ratio>=minR?"bg-emerald-600 hover:bg-emerald-700":"bg-gray-400 cursor-not-allowed"}`}>
+                                    Odemknout
+                                </button>
+                            </div>
+                            {ratio<minR&&<div className="text-sm text-rose-600">Potřebuješ {Math.round(minR*100)} %.</div>}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // Cryptex resolver and components
+        function resolveCryptexWheels(assets, lock) {
+            if (lock?.input?.wheels && Array.isArray(lock.input.wheels)) {
+                return lock.input.wheels;
+            }
+            const ref = lock?.input?.wheels_ref;
+            if (ref && assets?.keyboards?.[ref]?.wheels) {
+                return assets.keyboards[ref].wheels;
+            }
+            if (assets?.keyboards?.cryptex?.wheels) {
+                return assets.keyboards.cryptex.wheels;
+            }
+            return ["ABCD", "EFGH", "IJKL", "MNOP"]; // nouzově
+        }
+
+        function CryptexWheel({ set, value, onChange }) {
+            const list = Array.isArray(set) ? set : String(set).split("");
+            const idx = Math.max(0, list.indexOf(value));
+            const prev = list[(idx - 1 + list.length) % list.length];
+            const next = list[(idx + 1) % list.length];
+
+            const up = () => onChange(list[(idx - 1 + list.length) % list.length]);
+            const down = () => onChange(list[(idx + 1) % list.length]);
+
+            return (
+                <div className="flex flex-col items-center mx-1">
+                    <button
+                        onClick={up}
+                        className="w-8 h-6 grid place-items-center rounded-md bg-slate-200 text-slate-700 shadow hover:bg-slate-300"
+                        aria-label="Up"
+                    >
+                        ▲
+                    </button>
+
+                    <div className="w-12 rounded-xl overflow-hidden bg-slate-900 text-white shadow ring-1 ring-white/10 select-none">
+                        <div className="opacity-40 text-sm py-1 text-center">{prev}</div>
+                        <div className="text-xl font-bold py-1 text-center bg-slate-800">{value}</div>
+                        <div className="opacity-40 text-sm py-1 text-center">{next}</div>
+                    </div>
+
+                    <button
+                        onClick={down}
+                        className="w-8 h-6 grid place-items-center rounded-md bg-slate-200 text-slate-700 shadow hover:bg-slate-300 mt-1"
+                        aria-label="Down"
+                    >
+                        ▼
+                    </button>
+                </div>
+            );
+        }
+
+        function CryptexLock({ lock, assets, onDone, readonly = false, preset = [] }) {
+            const rawWheels = resolveCryptexWheels(assets, lock);
+            const sets = rawWheels.map((w) => (Array.isArray(w) ? w : String(w).split("")));
+            const len = Math.min(lock?.input?.length || sets.length, sets.length);
+            const answer = (lock?.answer || []).slice(0, len);
+
+            const [vals, setVals] = React.useState(
+                preset.length ? preset.slice(0, len) : sets.slice(0, len).map((s) => s[0])
+            );
+            const [hl, setHl] = React.useState(Array(len).fill(null));
+
+            const change = (i, val) => setVals((v) => v.map((x, ix) => (ix === i ? val : x)));
+
+            const submit = () => {
+                const correct = JSON.stringify(vals) === JSON.stringify(answer);
+                setHl(vals.map((v, i) => (answer[i] == null ? null : v === answer[i] ? "ok" : "bad")));
+                onDone(correct, vals);
+            };
+
+            const reset = () => {
+                setVals(sets.slice(0, len).map((s) => s[0]));
+                setHl(Array(len).fill(null));
+            };
+
+            return (
+                <div className="space-y-4" tabIndex={0} onKeyDown={onEnter(submit)}>
+                    {/* horní „okýnka" se zvýrazněním */}
+                    <Slots values={vals} length={len} highlight={hl} />
+
+                    {/* samotné „válce" */}
+                    <div className="flex justify-center">
+                        {Array.from({ length: len }).map((_, i) => (
+                            <CryptexWheel
+                                key={i}
+                                set={sets[i]}
+                                value={vals[i]}
+                                onChange={(v) => !readonly && change(i, v)}
+                            />
+                        ))}
+                    </div>
+
+                    {/* ovládací tlačítka */}
+                    <ActionBar>
+                        <ConfirmResetButton onConfirm={reset} />
+                        <button onClick={submit}
+                            className="px-6 py-3 rounded-xl bg-emerald-500 text-white font-semibold shadow hover:bg-emerald-600">✓</button>
+                    </ActionBar>
+                </div>
+            );
+        }
+
+        // Author Badge Component
+        function AuthorBadge({ game }) {
+            const a = game?.meta?.author;
+            if (!a) return null;
+            const pos = a.position === "bottom-right" ? "bottom-2 right-2" : "bottom-2 left-2";
+            const [expanded, setExpanded] = React.useState(false);
+
+            const handleClick = (e) => {
+                e.preventDefault();
+                if (!expanded) {
+                    setExpanded(true);
+                    return;
+                }
+                if (a.url) window.open(a.url, "_blank", "noopener,noreferrer");
+            };
+
+            return (
+                <a
+                    href={a.url || "#"}
+                    onClick={handleClick}
+                    className={`fixed ${pos} z-40 flex items-center gap-2 bg-white/75 hover:bg-white/90
+                              backdrop-blur rounded-full shadow px-2 py-1 transition-transform
+                              ${expanded ? "scale-110 shadow-lg" : "scale-100"}`}
+                    title={a.name || "Autor"}
+                >
+                    {a.logo && (
+                        <img
+                            src={a.logo}
+                            alt={a.name || "Autor"}
+                            className={`rounded-full ${expanded ? "w-7 h-7" : "w-5 h-5"}`}
+                        />
+                    )}
+                    <span className={`text-xs ${expanded ? "font-semibold" : "font-medium"} text-slate-700`}>
+                        {a.text || a.name}
+                    </span>
+                </a>
+            );
+        }
+
+        // Game Host Component
+        function GameHost({ game }) {
+            const pagesById = useMemo(() => Object.fromEntries(game.pages.map(p => [p.id, p])), [game]);
+
+            const start = game.meta?.start_page || game.pages[0]?.id;
+            const [currentId, setCurrentId] = useState(start);
+            const [gameCompleted, setGameCompleted] = useState(false);
+            const [solvedByStep, setSolvedByStep] = useState({});
+
+            // --- přesunout nahoru, ať jsou k dispozici všude ---
+            const loseId = game.meta?.timer?.lose_page;
+            const navSteps = React.useMemo(()=>deriveNavSteps(game.pages, loseId),[game.pages, loseId]);
+
+            // Timer logic
+            const timerCfg = game.meta?.timer || {};
+            const hasTimer = !!timerCfg.enabled && !!timerCfg.seconds;
+            const [timeLeft, setTimeLeft] = useState(timerCfg.seconds || 0);
+
+            useEffect(() => {
+                if (!hasTimer) return;
+                setTimeLeft(timerCfg.seconds); // reset při načtení hry
+            }, [hasTimer, timerCfg.seconds]);
+
+            useEffect(() => {
+                if (!hasTimer || timeLeft <= 0) return;
+                const id = setInterval(() => setTimeLeft(t => t - 1), 1000);
+                return () => clearInterval(id);
+            }, [hasTimer, timeLeft]);
+
+            useEffect(() => {
+                if (!hasTimer || timeLeft > 0) return;
+                if (currentId === loseId) return;   // ← nepadat do smyčky
+                if (loseId) {
+                    setCurrentId(loseId);
+                } else {
+                    alert("⏰ Čas vypršel! Zkus to znovu.");
+                    setCurrentId(start);
+                    setSolvedByStep({});
+                    setTimeLeft(timerCfg.seconds || 0);
+                }
+            }, [hasTimer, timeLeft, currentId, loseId, start, timerCfg.seconds]);
+
+            const page = pagesById[currentId];
+            const currentIndex = Math.max(0, navSteps.findIndex(s=>s.id===currentId));
+
+            function onResolve(success) {
+                const next = success ? page?.next_on_success : page?.next_on_fail;
+                if (success) {
+                    setSolvedByStep(s => ({ ...s, [currentId]: true }));
+                    if (hasTimer && currentId === loseId) setTimeLeft(timerCfg.seconds || 0);
+                }
+                if (next) {
+                    setCurrentId(next);
+                } else {
+                    const idx = game.pages.findIndex(p => p.id === currentId);
+                    const np = game.pages[idx + 1];
+                    if (np) setCurrentId(np.id);
+                    else setGameCompleted(true);
+                    return;
+                }
+            }
+
+            const handleStepClick = (targetId) => {
+                const idx = navSteps.findIndex(s=>s.id===targetId);
+                if (idx>-1 && idx<=currentIndex) setCurrentId(targetId);
+            };
+            
+            if (!page) {
+                return (
+                    <div className="mx-auto max-w-[900px] min-h-screen text-slate-800 p-6">
+                        <div className="text-red-600">Neplatné ID stránky: {currentId}</div>
+                    </div>
+                );
+            }
+            
+            if (gameCompleted) {
+                return (
+                    <div className="mx-auto max-w-[900px] min-h-screen text-slate-800 flex items-center justify-center">
+                        <div className="text-center space-y-6 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl">
+                            <div className="text-8xl animate-bounce">🎉</div>
+                            <h1 className="text-5xl font-bold text-emerald-600 animate-pulse">Gratulujeme!</h1>
+                            <p className="text-2xl text-slate-700">Úspěšně jste dokončili escape game!</p>
+                            <div className="flex justify-center space-x-4 text-4xl">
+                                <span className="animate-bounce">🏆</span>
+                                <span className="animate-bounce">⭐</span>
+                                <span className="animate-bounce">🎊</span>
+                                <span className="animate-bounce">✨</span>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setCurrentId(start);
+                                    setSolvedByStep({});
+                                    setGameCompleted(false);
+                                    if (hasTimer) setTimeLeft(timerCfg.seconds || 0);
+                                }}
+                                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg"
+                            >
+                                Hrát znovu
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+            
+            const lockMode = page.lock?.mode;
+            const dockSize = ["colors","shapes","arrows","cryptex","quiz"].includes(lockMode) ? "expanded" : "compact";
+
+            return (
+                <div className="mx-auto max-w-[900px] min-h-screen pt-[56px]">
+                    <ProgressRail
+                        steps={navSteps}
+                        currentId={currentId}
+                        onStepClick={handleStepClick}
+                        showTimer={!!(timerCfg.show && hasTimer)}
+                        timeLeft={timeLeft}
+                        warnAt={timerCfg.warning_at ?? 30}
+                    />
+                    <div key={currentId} className="fade">
+                        <Scene
+                            page={page}
+                            assets={game.assets}
+                            onResolve={onResolve}
+                            solved={!!solvedByStep[currentId]}
+                            dockSize={dockSize}
+                        />
+                    </div>
+                    <AuthorBadge game={game} />
+                </div>
+            );
+        }
+
+        // Main App Component
+        function App() {
+            const [game, setGame] = useState(null);
+            const [error, setError] = useState(null);
+            const [loading, setLoading] = useState(true);
+            
+            useEffect(() => {
+                fetch(GAME_JSON_URL)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Add fallback for old JSON format
+                        data.pages.forEach(p => {
+                            if (p.ui?.background_img && !p.ui.background_imgs)
+                                p.ui.background_imgs = [p.ui.background_img];
+                        });
+                        setGame(data);
+                        setLoading(false);
+                    })
+                    .catch(err => {
+                        setError(String(err));
+                        setLoading(false);
+                    });
+            }, []);
+            
+            if (loading) {
+                return (
+                    <div className="min-h-screen text-slate-800 flex items-center justify-center">
+                        <div className="text-center space-y-4 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl">
+                            <div className="animate-spin text-4xl">⚙️</div>
+                            <div className="text-xl">Načítám hru...</div>
+                        </div>
+                    </div>
+                );
+            }
+            
+            if (error) {
+                return (
+                    <div className="min-h-screen text-slate-800 flex items-center justify-center">
+                        <div className="text-center space-y-4 p-6 bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl">
+                            <div className="text-4xl">❌</div>
+                            <div className="text-xl text-red-600">Chyba při načítání hry</div>
+                            <div className="text-slate-600">{error}</div>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow"
+                            >
+                                Zkusit znovu
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+            
+            if (!game) {
+                return (
+                    <div className="min-h-screen text-slate-800 flex items-center justify-center">
+                        <div className="text-red-600 bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl">Nepodařilo se načíst data hry</div>
+                    </div>
+                );
+            }
+            
+            return <GameHost game={game} />;
+        }
+
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98fde02d8316b377',t:'MTc2MDY4Mzk3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
