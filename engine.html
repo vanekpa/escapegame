@@ -1,0 +1,3861 @@
+<!DOCTYPE html>
+<html lang="cs" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Úniková hra - Engine</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'fredoka': ['Fredoka', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html, body {
+            height: auto;
+            min-height: 100vh;
+            box-sizing: border-box;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        /* === DÁVKA 3: DESIGN SYSTÉM === */
+        :root {
+            /* Barvy */
+            --primary-50: #f0f9ff;
+            --primary-100: #e0f2fe;
+            --primary-500: #0ea5e9;
+            --primary-600: #0284c7;
+            --primary-700: #0369a1;
+            
+            --success-400: #4ade80;
+            --success-500: #22c55e;
+            --success-600: #16a34a;
+            
+            --danger-400: #f87171;
+            --danger-500: #ef4444;
+            --danger-600: #dc2626;
+            
+            --warning-400: #fbbf24;
+            --warning-500: #f59e0b;
+            
+            --neutral-50: #f8fafc;
+            --neutral-100: #f1f5f9;
+            --neutral-200: #e2e8f0;
+            --neutral-300: #cbd5e1;
+            --neutral-400: #94a3b8;
+            --neutral-500: #64748b;
+            --neutral-600: #475569;
+            --neutral-700: #334155;
+            --neutral-800: #1e293b;
+            --neutral-900: #0f172a;
+            
+            /* Stíny */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            
+            /* Rozměry */
+            --touch-target: 44px;
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --border-radius-lg: 16px;
+        }
+
+        /* Gradient pozadí */
+        .game-background {
+            background: linear-gradient(135deg, 
+                #667eea 0%, 
+                #764ba2 25%, 
+                #f093fb 50%, 
+                #f5576c 75%, 
+                #4facfe 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Info bubble */
+        .info-bubble {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Progress rail */
+        .progress-rail {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(5px);
+            border-radius: var(--border-radius-lg);
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .progress-rail::-webkit-scrollbar {
+            display: none;
+        }
+
+        .progress-step {
+            min-width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .progress-step.completed {
+            background: var(--success-500);
+            color: white;
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+        }
+
+        .progress-step.current {
+            background: var(--primary-500);
+            color: white;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .progress-step.pending {
+            background: var(--neutral-300);
+            color: var(--neutral-600);
+        }
+
+        .progress-step.failed {
+            background: var(--danger-500);
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Unifikované vstupy */
+        .ui-field {
+            margin-bottom: 1.5rem;
+        }
+
+        .ui-label {
+            display: block;
+            font-weight: 600;
+            color: var(--neutral-700);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .ui-input {
+            width: 100%;
+            min-height: var(--touch-target);
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--neutral-200);
+            border-radius: var(--border-radius-sm);
+            font-size: 1rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .ui-input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        .ui-input:invalid {
+            border-color: var(--danger-400);
+        }
+
+        .ui-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1.5rem;
+        }
+
+        .ui-btn {
+            min-height: var(--touch-target);
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius-sm);
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            user-select: none;
+        }
+
+        .ui-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .ui-btn.primary {
+            background: var(--primary-500);
+            color: white;
+        }
+
+        .ui-btn.primary:hover:not(:disabled) {
+            background: var(--primary-600);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .ui-btn.success {
+            background: var(--success-500);
+            color: white;
+        }
+
+        .ui-btn.success:hover:not(:disabled) {
+            background: var(--success-600);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .ui-btn.danger {
+            background: var(--danger-500);
+            color: white;
+        }
+
+        .ui-btn.danger:hover:not(:disabled) {
+            background: var(--danger-600);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .ui-btn.secondary {
+            background: var(--neutral-100);
+            color: var(--neutral-700);
+            border: 1px solid var(--neutral-200);
+        }
+
+        .ui-btn.secondary:hover:not(:disabled) {
+            background: var(--neutral-200);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Kulaté sloty/klávesy */
+        .key-slot {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 3px solid var(--neutral-300);
+            background: white;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .key-slot:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-400);
+        }
+
+        .key-slot.filled {
+            background: var(--success-500);
+            color: white;
+            border-color: var(--success-600);
+        }
+
+        .key-slot.error {
+            background: var(--danger-500);
+            color: white;
+            border-color: var(--danger-600);
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Scene container */
+        .scene-container {
+            position: relative;
+            width: 100%;
+            height: auto;
+            overflow: visible;
+            border-radius: var(--border-radius);
+        }
+
+        .scene-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1;
+        }
+
+        .scene-content {
+            position: relative;
+            z-index: 2;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Background carousel */
+        .background-carousel {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .background-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+            /* Fallback gradient pokud se obrázek nenačte */
+            background-color: #667eea;
+            background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .background-slide.active {
+            opacity: 1;
+        }
+
+
+
+        /* === DÁVKA 5: TEXT ZOOM === */
+        .text-zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: var(--border-radius-sm);
+        }
+
+        /* === DÁVKA 6: MAGNIFIER === */
+        .magnifier-container {
+            position: relative;
+            display: inline-block;
+            cursor: crosshair;
+            overflow: hidden;
+            border-radius: var(--border-radius);
+        }
+
+        .magnifier-image {
+            display: block;
+            width: 100%;
+            height: auto;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        .magnifier-lens {
+            position: absolute;
+            width: 140px; 
+            height: 140px;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            display: none;
+            z-index: 10;
+        }
+
+        .magnifier-result {
+            position: absolute;
+            right: 12px; 
+            bottom: 12px; 
+            width: 180px; 
+            height: 180px;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #111;
+            border: 3px solid #fff;
+            display: none;
+            z-index: 20;
+        }
+
+        .magnifier-result img {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .zoomable-scene-image {
+            max-width: 100%;
+            height: auto;
+            max-height: 45vh;
+            object-fit: contain;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        @media (max-width: 768px) {
+            .zoomable-scene-image { 
+                max-height: 35vh; 
+            }
+        }
+
+        /* === DÁVKA 7-9: COMPLETE LOCK SYSTEM STYLES === */
+        .lock-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Numeric Lock Slots */
+        .numeric-slots-container {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .numeric-slot {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--neutral-300);
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .numeric-slot:hover {
+            border-color: var(--primary-400);
+            transform: translateY(-1px);
+        }
+
+        .numeric-slot.selected {
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+        }
+
+        .numeric-slot.correct {
+            border-color: var(--success-500);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .numeric-slot.incorrect {
+            border-color: var(--danger-500);
+            background: rgba(239, 68, 68, 0.1);
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .slot-content {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--neutral-700);
+        }
+
+        /* Sequence Slots (Arrows, Colors, Shapes) */
+        .sequence-slots-container {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .sequence-slot {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--neutral-300);
+            border-radius: var(--border-radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .sequence-slot:hover {
+            border-color: var(--primary-400);
+            transform: translateY(-1px);
+        }
+
+        .sequence-slot.selected {
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+        }
+
+        .sequence-slot.correct {
+            border-color: var(--success-500);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .sequence-slot.incorrect {
+            border-color: var(--danger-500);
+            background: rgba(239, 68, 68, 0.1);
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* Color Slots */
+        .color-slot .color-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid var(--neutral-300);
+            background: var(--neutral-100);
+        }
+
+        .color-slot .color-name {
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--neutral-600);
+        }
+
+        /* Shape Slots */
+        .shape-slot .shape-container {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--neutral-600);
+        }
+
+        /* Soft Keyboards */
+        .soft-keyboard {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: var(--border-radius-sm);
+        }
+
+        .keyboard-row {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .keyboard-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .keyboard-grid {
+            display: grid;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .color-keyboard .keyboard-grid {
+            grid-template-columns: repeat(4, 1fr);
+            max-width: 200px;
+        }
+
+        .shape-keyboard .keyboard-grid {
+            grid-template-columns: repeat(3, 1fr);
+            max-width: 180px;
+        }
+
+        .keyboard-key {
+            min-width: 44px;
+            min-height: 44px;
+            border: 2px solid var(--neutral-300);
+            border-radius: var(--border-radius-sm);
+            background: white;
+            font-size: 1.25rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--neutral-700);
+        }
+
+        .keyboard-key:hover {
+            border-color: var(--primary-400);
+            background: var(--primary-50);
+            transform: translateY(-1px);
+        }
+
+        .keyboard-key:active {
+            transform: translateY(0);
+        }
+
+        .keyboard-key.backspace-key {
+            background: var(--danger-50);
+            border-color: var(--danger-300);
+            color: var(--danger-600);
+        }
+
+        .keyboard-key.backspace-key:hover {
+            background: var(--danger-100);
+            border-color: var(--danger-400);
+        }
+
+        /* Arrow Keys */
+        .arrow-key {
+            font-size: 1.5rem;
+        }
+
+        /* Color Keys */
+        .color-key {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Shape Keys */
+        .shape-key {
+            width: 50px;
+            height: 50px;
+        }
+
+        .shape-key svg {
+            color: var(--neutral-600);
+        }
+
+        .shape-key:hover svg {
+            color: var(--primary-600);
+        }
+
+        /* Lock Feedback */
+        .lock-feedback {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: var(--border-radius-sm);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .lock-feedback.success {
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--success-600);
+            border: 1px solid var(--success-200);
+        }
+
+        .lock-feedback.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-600);
+            border: 1px solid var(--danger-200);
+        }
+
+        .lock-feedback.info {
+            background: rgba(14, 165, 233, 0.1);
+            color: var(--primary-600);
+            border: 1px solid var(--primary-200);
+        }
+
+        /* === DÁVKA 12: A11Y & QOL STYLES === */
+        
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            
+            .magnifier-lens,
+            .magnifier-result {
+                transition: none !important;
+            }
+            
+            .background-slide {
+                transition: none !important;
+            }
+            
+            .cryptex-char {
+                transition: none !important;
+            }
+        }
+
+        /* Enhanced mobile touch targets */
+        @media (max-width: 768px) {
+            .ui-btn {
+                min-height: 48px;
+                padding: 0.875rem 1.5rem;
+                font-size: 1rem;
+            }
+            
+            .keyboard-key {
+                min-width: 48px;
+                min-height: 48px;
+                font-size: 1.125rem;
+            }
+            
+            .numeric-slot,
+            .sequence-slot {
+                width: 64px;
+                height: 64px;
+                font-size: 1.375rem;
+            }
+            
+            .cryptex-arrow {
+                width: 48px;
+                height: 36px;
+                font-size: 1.125rem;
+            }
+            
+            .cryptex-wheel {
+                width: 64px;
+                height: 64px;
+            }
+            
+            .text-zoom-btn {
+                min-width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+        }
+
+        /* Touch action optimization */
+        .keyboard-key,
+        .ui-btn,
+        .numeric-slot,
+        .sequence-slot,
+        .cryptex-arrow,
+        .text-zoom-btn {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Focus indicators for keyboard navigation */
+        .keyboard-key:focus,
+        .ui-btn:focus,
+        .numeric-slot:focus,
+        .sequence-slot:focus,
+        .cryptex-arrow:focus,
+        .text-zoom-btn:focus {
+            outline: 3px solid var(--primary-400);
+            outline-offset: 2px;
+        }
+
+        /* Screen reader only content */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Live region for announcements */
+        .live-region {
+            position: absolute;
+            left: -10000px;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+        }
+
+        /* layout „obrázek nad zámkem" – ale ať je vše vždy vidět */
+        .content-stack { 
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px; 
+        }
+        
+        @media (min-width: 1024px) {
+            .content-stack {
+                grid-template-columns: 1fr 520px;
+                align-items: start;
+            }
+            /* aby se zámek "držel" na očích při scrollu */
+            .lock-container { 
+                position: sticky; 
+                top: 88px; 
+            }
+        }
+
+        /* puzzle bublina: obrázek nikdy nepřesáhne X% výšky okna */
+        .puzzle-bubble .zoomable-scene-image { 
+            max-height: 45vh; 
+        }
+        
+        @media (max-width: 768px) {
+            .puzzle-bubble .zoomable-scene-image { 
+                max-height: 35vh; 
+            }
+        }
+
+        /* rozbalovací sekce obrázku */
+        .puzzle-body.collapsed { 
+            display: none; 
+        }
+
+        /* aby se výsledek lupy nedostal mimo kontejner a nelezl do textu */
+        .magnifier-container { 
+            position: relative; 
+        }
+        
+        .magnifier-result { 
+            right: 12px; 
+            bottom: 12px; 
+            left: auto; 
+            top: auto; 
+        }
+
+        /* ať je zámek viditelný i když je obsah dlouhý */
+        .lock-container { 
+            max-width: 740px; 
+            margin-left: auto; 
+            margin-right: auto; 
+        }
+
+        /* šipky v jedné řadě */
+        .arrow-keyboard .arrows-row .keyboard-key { 
+            min-width: 56px; 
+        }
+
+        /* víc tvarů do řady na desktopu */
+        .shape-keyboard .keyboard-grid { 
+            grid-template-columns: repeat(6, 1fr); 
+            max-width: 480px; 
+        }
+
+        /* barvy v pevné mřížce */
+        .color-keyboard .keyboard-grid { 
+            grid-template-columns: repeat(5, 1fr); 
+            max-width: 320px; 
+        }
+
+        @media (max-width: 768px) {
+            .shape-keyboard .keyboard-grid { 
+                grid-template-columns: repeat(3, 1fr); 
+                max-width: 220px; 
+            }
+            
+            .color-keyboard .keyboard-grid { 
+                grid-template-columns: repeat(4, 1fr); 
+                max-width: 260px; 
+            }
+        }
+
+        /* === DÁVKA 10: CRYPTEX + QUIZ STYLES === */
+        
+        /* Cryptex Styles */
+        .cryptex-wheels-container {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .cryptex-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .cryptex-arrow {
+            width: 40px;
+            height: 30px;
+            border: 2px solid var(--neutral-300);
+            border-radius: var(--border-radius-sm);
+            background: white;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--neutral-600);
+        }
+
+        .cryptex-arrow:hover {
+            border-color: var(--primary-400);
+            background: var(--primary-50);
+            color: var(--primary-600);
+            transform: translateY(-1px);
+        }
+
+        .cryptex-arrow:active {
+            transform: translateY(0);
+        }
+
+        .cryptex-wheel {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--neutral-400);
+            border-radius: var(--border-radius-sm);
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cryptex-char {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--neutral-700);
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .cryptex-wheel.correct {
+            border-color: var(--success-500);
+            background: linear-gradient(145deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.2));
+        }
+
+        .cryptex-wheel.incorrect {
+            border-color: var(--danger-500);
+            background: linear-gradient(145deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.2));
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* Quiz Styles */
+        .quiz-progress {
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--neutral-200);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .quiz-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-500), var(--primary-400));
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+
+        .quiz-progress-text {
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--neutral-600);
+            font-weight: 600;
+        }
+
+        .quiz-questions {
+            margin: 1.5rem 0;
+        }
+
+        .quiz-question {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 2px solid var(--neutral-200);
+            border-radius: var(--border-radius);
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .quiz-question:hover {
+            border-color: var(--primary-300);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .quiz-question.answered {
+            border-color: var(--primary-400);
+            background: rgba(14, 165, 233, 0.05);
+        }
+
+        .quiz-question.correct {
+            border-color: var(--success-500);
+            background: rgba(34, 197, 94, 0.05);
+        }
+
+        .quiz-question.incorrect {
+            border-color: var(--danger-500);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .quiz-question-text {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--neutral-800);
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .quiz-answers {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .quiz-answer {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border: 1px solid var(--neutral-200);
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: white;
+        }
+
+        .quiz-answer:hover {
+            border-color: var(--primary-300);
+            background: var(--primary-50);
+        }
+
+        .quiz-answer input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .quiz-answer-text {
+            flex: 1;
+            font-size: 1rem;
+            color: var(--neutral-700);
+            line-height: 1.4;
+        }
+
+        .quiz-answer.selected {
+            border-color: var(--primary-500);
+            background: var(--primary-100);
+        }
+
+        .quiz-answer.correct-answer {
+            border-color: var(--success-500);
+            background: var(--success-50);
+        }
+
+        .quiz-answer.wrong-answer {
+            border-color: var(--danger-500);
+            background: var(--danger-50);
+        }
+
+        /* Legacy lock input styles for compatibility */
+        .lock-input-grid {
+            display: grid;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            justify-content: center;
+        }
+
+        .lock-input-grid.numeric {
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            max-width: 300px;
+        }
+
+        .lock-input-grid.text {
+            grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+            max-width: 400px;
+        }
+
+        .lock-input {
+            width: 60px;
+            height: 60px;
+            border: 3px solid var(--neutral-300);
+            border-radius: var(--border-radius-sm);
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .lock-input:focus {
+            outline: none;
+            border-color: var(--primary-500);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        .lock-input.correct {
+            border-color: var(--success-500);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .lock-input.incorrect {
+            border-color: var(--danger-500);
+            background: rgba(239, 68, 68, 0.1);
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .text-zoom-label {
+            font-size: 0.75rem;
+            color: var(--neutral-600);
+            font-weight: 500;
+        }
+
+        .text-zoom-btn {
+            min-width: 32px;
+            height: 32px;
+            border: 1px solid var(--neutral-300);
+            background: white;
+            border-radius: var(--border-radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .text-zoom-btn:hover {
+            background: var(--neutral-50);
+            border-color: var(--primary-400);
+        }
+
+        .text-zoom-btn.active {
+            background: var(--primary-500);
+            color: white;
+            border-color: var(--primary-600);
+        }
+
+        /* Text size classes */
+        .text-size-small {
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        .text-size-medium {
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .text-size-large {
+            font-size: 1.125rem;
+            line-height: 1.6;
+        }
+
+        .text-size-xlarge {
+            font-size: 1.25rem;
+            line-height: 1.7;
+        }
+
+        /* InfoBubble enhanced */
+        .info-bubble-content {
+            transition: font-size 0.2s ease, line-height 0.2s ease;
+        }
+
+        .info-bubble-title {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--neutral-800);
+        }
+
+        .info-bubble-text {
+            color: var(--neutral-700);
+            margin-bottom: 1.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .ui-actions {
+                flex-direction: column;
+            }
+            
+            .ui-btn {
+                width: 100%;
+            }
+            
+            .progress-rail {
+                padding: 0.75rem;
+            }
+            
+            .progress-step {
+                min-width: 32px;
+                height: 32px;
+                font-size: 0.75rem;
+            }
+
+            .text-zoom-controls {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body class="h-full game-background font-fredoka">
+    <div id="root" style="display: block; padding: 20px 16px; min-height: 100vh; overflow-y: auto;">
+        <!-- Loading UI bude zde -->
+    </div>
+    
+    <!-- Live region for screen reader announcements -->
+    <div id="live-region" class="live-region" aria-live="polite" aria-atomic="true"></div>
+
+    <script>
+        // === DÁVKA 1: SKELETON + NAČTENÍ JSON ===
+        
+        class EscapeGameEngine {
+            constructor() {
+                this.gameData = null;
+                this.normalizedData = null;
+                this.pageIndex = new Map();
+                this.preloadedImages = new Set();
+                this.root = document.getElementById('root');
+                this.liveRegion = document.getElementById('live-region');
+                
+                // interní registr aktivních lup
+                this.magnifiers = new Map();
+                
+                // Dávka 2: Stav hry
+                this.state = {
+                    currentId: null,
+                    solvedByStep: new Map(),
+                    timeLeft: 0,
+                    isRunning: false,
+                    textSize: 'medium' // Dávka 5: Text zoom
+                };
+                
+                this.timerInterval = null;
+                this.carouselInterval = null;
+                this.navSteps = [];
+                
+                // Dávka 12: Keyboard navigation
+                this.setupKeyboardNavigation();
+            }
+
+            // Načtení JSON dat ze vzdálené URL
+            async fetchGame(url) {
+                try {
+                    this.showLoading('Načítám data hry...');
+                    
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    this.gameData = data;
+                    
+                    return data;
+                } catch (error) {
+                    console.error('Chyba při načítání hry:', error);
+                    this.showError(`Nepodařilo se načíst hru: ${error.message}`);
+                    throw error;
+                }
+            }
+
+            // Normalizace dat - převod na konzistentní formát
+            normalizeGame(data) {
+                const mapLock = (lock, assets) => {
+                    if (!lock) return null;
+                    const mode = lock.mode;
+                    const cfg = { mode, hint: lock.hint || '', assets };
+
+                    switch (mode) {
+                        case 'numeric': {
+                            const seq = Array.isArray(lock.answer)
+                                ? lock.answer.map(n => Number(n))
+                                : String(lock.answer || '').split('').map(n => Number(n));
+                            cfg.solution = { sequence: seq };
+                            break;
+                        }
+                        case 'text': {
+                            cfg.solution = {
+                                word: String(lock.answer || ''),
+                                case_sensitive: !!(lock.input && lock.input.case_sensitive)
+                            };
+                            break;
+                        }
+                        case 'arrows':
+                        case 'colors':
+                        case 'shapes': {
+                            cfg.solution = { sequence: Array.isArray(lock.answer) ? lock.answer : [] };
+                            if (mode === 'colors') {
+                                const names = data.assets?.colors || [];
+                                cfg.assets = {
+                                    ...cfg.assets,
+                                    colors: names.reduce((acc, n) => (acc[n]=acc[n]||n, acc), {})
+                                };
+                            }
+                            if (mode === 'shapes') {
+                                cfg.assets = { ...cfg.assets, shape_svgs: data.assets?.shape_svgs || {} };
+                            }
+                            break;
+                        }
+                        case 'cryptex': {
+                            const word = Array.isArray(lock.answer) ? lock.answer.join('') : String(lock.answer||'');
+                            cfg.solution = { word, case_sensitive: false };
+                            cfg.assets = {
+                                ...cfg.assets,
+                                keyboards: { cryptex: { wheels: data.assets?.keyboards?.cryptex?.wheels || [] } }
+                            };
+                            break;
+                        }
+                        case 'quiz': {
+                            // převezmi rovnou; engine používá questions[{question,answers[],correct_answer}]
+                            const qs = (lock.questions || []).map(q => ({
+                                question: q.text,
+                                answers: q.answers.map(a => a.text),
+                                correct_answer: q.answers.findIndex(a => a.correct)
+                            }));
+                            cfg.questions = qs;
+                            cfg.pass_ratio = lock.pass_ratio ?? 0.8;
+                            cfg.limit_draw = lock.limit ?? qs.length;
+                            break;
+                        }
+                    }
+                    return cfg;
+                };
+
+                const timer = data.meta?.timer
+                    ? {
+                        enabled: !!data.meta.timer.enabled,
+                        duration_seconds: Number(data.meta.timer.seconds || 0),
+                        warning_at: Number(data.meta.timer.warning_at || 0),
+                        show: !!data.meta.timer.show,
+                        lose_page: data.meta.timer.lose_page || data.meta.timer.losePage || 'p-timeout'
+                    }
+                    : null;
+
+                const normalized = {
+                    meta: {
+                        ...data.meta,
+                        timer
+                    },
+                    pages: data.pages.map(p => {
+                        const type = p.type === 'info' ? 'story' : p.type;
+                        
+                        // Pozadí jen pro magnifier a lock stránky z ui.background_imgs
+                        // Pro story/info stránky použij p.background_imgs nebo prázdné
+                        const wantsUiBg = (type === 'magnifier' || type === 'lock');
+                        const uiImgs = wantsUiBg
+                            ? (p.ui?.background_imgs || (p.ui?.background_img ? [p.ui.background_img] : []))
+                            : (p.background_imgs || (p.background_img ? [p.background_img] : []));
+                        
+                        const title = p.info?.title || p.title || '';
+                        const description = p.info?.text || p.info?.story || p.description || '';
+
+                        return {
+                            ...p,
+                            type,
+                            title,
+                            description,
+                            background_imgs: uiImgs,
+                            next_on_success: p.next_on_success ?? null,
+                            next_on_fail: p.next_on_fail ?? null,
+                            // transformace zámku do engine formátu
+                            lock: p.type === 'lock' ? mapLock(p.lock, data.assets || {}) : null
+                        };
+                    })
+                };
+                
+                this.normalizedData = normalized;
+                return normalized;
+            }
+
+            // Vytvoření indexu stránek pro rychlé vyhledávání
+            indexPages(data) {
+                this.pageIndex.clear();
+                
+                data.pages.forEach((page, index) => {
+                    this.pageIndex.set(page.id, {
+                        page: page,
+                        index: index
+                    });
+                });
+                
+                console.log(`Indexováno ${this.pageIndex.size} stránek`);
+            }
+
+            // Přednačtení všech obrázků
+            async preloadImages(data) {
+                const imageUrls = new Set();
+                
+                // Sbírání všech URL obrázků
+                data.pages.forEach(page => {
+                    // Background obrázky
+                    page.background_imgs?.forEach(url => {
+                        if (url) imageUrls.add(url);
+                    });
+                    
+                    // Obrázky v elementech
+                    page.elements?.forEach(element => {
+                        if (element.image_url) imageUrls.add(element.image_url);
+                    });
+                });
+
+                this.showLoading(`Načítám obrázky... (0/${imageUrls.size})`);
+                
+                const promises = Array.from(imageUrls).map((url, index) => 
+                    this.preloadSingleImage(url).then(() => {
+                        this.showLoading(`Načítám obrázky... (${index + 1}/${imageUrls.size})`);
+                    })
+                );
+                
+                try {
+                    await Promise.all(promises);
+                    console.log(`Přednačteno ${imageUrls.size} obrázků`);
+                } catch (error) {
+                    console.warn('Některé obrázky se nepodařilo načíst:', error);
+                }
+            }
+
+            // Přednačtení jednoho obrázku
+            preloadSingleImage(url) {
+                return new Promise((resolve, reject) => {
+                    if (this.preloadedImages.has(url)) {
+                        resolve();
+                        return;
+                    }
+                    
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous'; // Pokus o CORS
+                    img.onload = () => {
+                        this.preloadedImages.add(url);
+                        console.log(`✅ Obrázek načten: ${url}`);
+                        resolve();
+                    };
+                    img.onerror = () => {
+                        console.warn(`❌ Nepodařilo se načíst obrázek: ${url}`);
+                        // Přidáme i chybné URL do cache aby se nepokoušelo znovu
+                        this.preloadedImages.add(url);
+                        resolve(); // Pokračujeme i při chybě
+                    };
+                    img.src = url;
+                });
+            }
+
+            // === DÁVKA 12: A11Y & QOL METHODS ===
+
+            // Escapování JSON do data-* atributů
+            escapeAttr(str) {
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            // Nastavení globální klávesové navigace
+            setupKeyboardNavigation() {
+                document.addEventListener('keydown', (e) => {
+                    // Z - cyklování text zoom
+                    if (e.key === 'z' || e.key === 'Z') {
+                        e.preventDefault();
+                        this.cycleTextSize();
+                    }
+                    
+                    // Enter - potvrzení aktivního zámku
+                    if (e.key === 'Enter') {
+                        const activeLock = document.querySelector('.lock-container');
+                        if (activeLock) {
+                            e.preventDefault();
+                            this.handleLockEnter(activeLock);
+                        }
+                    }
+                    
+                    // Backspace - mazání v numerických zámcích
+                    if (e.key === 'Backspace') {
+                        const numericLock = document.querySelector('.lock-container[data-config*="numeric"]');
+                        if (numericLock && document.activeElement.closest('.lock-container') === numericLock) {
+                            e.preventDefault();
+                            const lockId = numericLock.id;
+                            this.numericBackspace(lockId);
+                        }
+                    }
+                    
+                    // Číselné klávesy pro numerické zámky
+                    if (/^[0-9]$/.test(e.key)) {
+                        const numericLock = document.querySelector('.lock-container[data-config*="numeric"]');
+                        if (numericLock && document.activeElement.closest('.lock-container') === numericLock) {
+                            e.preventDefault();
+                            const lockId = numericLock.id;
+                            this.inputNumericKey(lockId, e.key);
+                        }
+                    }
+                });
+            }
+
+            // Cyklování velikosti textu klávesou Z
+            cycleTextSize() {
+                const sizes = ['small', 'medium', 'large', 'xlarge'];
+                const currentIndex = sizes.indexOf(this.state.textSize);
+                const nextIndex = (currentIndex + 1) % sizes.length;
+                const nextSize = sizes[nextIndex];
+                
+                this.setTextSize(nextSize);
+                this.announceToScreenReader(`Velikost textu změněna na ${this.getTextSizeLabel(nextSize)}`);
+            }
+
+            // Získání popisku velikosti textu
+            getTextSizeLabel(size) {
+                const labels = {
+                    'small': 'malé písmo',
+                    'medium': 'střední písmo', 
+                    'large': 'velké písmo',
+                    'xlarge': 'extra velké písmo'
+                };
+                return labels[size] || 'střední písmo';
+            }
+
+            // Obsluha Enter klávesy pro zámky
+            handleLockEnter(lockElement) {
+                const lockId = lockElement.id;
+                const config = JSON.parse(lockElement.dataset.config || '{}');
+                
+                switch (config.mode) {
+                    case 'numeric':
+                        this.checkNumericLock(lockId);
+                        break;
+                    case 'text':
+                        this.checkTextLock(lockId);
+                        break;
+                    case 'arrows':
+                        this.checkSequenceLock(lockId, 'arrows');
+                        break;
+                    case 'colors':
+                        this.checkSequenceLock(lockId, 'colors');
+                        break;
+                    case 'shapes':
+                        this.checkSequenceLock(lockId, 'shapes');
+                        break;
+                    case 'cryptex':
+                        this.checkCryptexLock(lockId);
+                        break;
+                    case 'quiz':
+                        this.checkQuizLock(lockId);
+                        break;
+                }
+            }
+
+            // Oznámení pro screen readery
+            announceToScreenReader(message) {
+                if (this.liveRegion) {
+                    this.liveRegion.textContent = message;
+                    // Vymazání po krátké době aby se mohla znovu použít
+                    setTimeout(() => {
+                        this.liveRegion.textContent = '';
+                    }, 1000);
+                }
+            }
+
+            // Rozbalování/sbalování sekcí
+            toggleSection(domId) {
+                const el = document.getElementById(domId);
+                if (!el) return;
+                el.classList.toggle('collapsed');
+            }
+
+            // zap/vyp lupa nad daným <img>
+            toggleMagnifier(imageId, config) {
+                const key = imageId;
+                if (this.magnifiers.has(key)) {
+                    this.magnifiers.get(key)?.destroy?.();
+                    this.magnifiers.delete(key);
+                    this.announceToScreenReader('Lupa vypnuta');
+                    return false;
+                } else {
+                    const img = document.getElementById(imageId);
+                    if (!img) return false;
+                    const inst = this.useMagnifier(img, config);
+                    this.magnifiers.set(key, inst);
+                    this.announceToScreenReader('Lupa zapnuta');
+                    return true;
+                }
+            }
+
+            // === DÁVKA 2: STAV, NAVIGACE, TIMER ===
+
+            // === DÁVKA 4: PROGRESSRAIL + SCENE ===
+            // === DÁVKA 5: INFOBUBBLE + TEXT ZOOM ===
+            // === DÁVKA 6: MAGNIFIER ===
+
+            // Magnifier funkce
+            useMagnifier(imgElement, config = {}) {
+                const cfg = { lensSize: 140, zoomLevel: 2, resultSize: 180, ...config };
+                const lens = document.createElement('div');
+                const result = document.createElement('div');
+
+                lens.className = 'magnifier-lens';
+                lens.style.width = cfg.lensSize + 'px';
+                lens.style.height = cfg.lensSize + 'px';
+
+                result.className = 'magnifier-result';
+                result.style.width = cfg.resultSize + 'px';
+                result.style.height = cfg.resultSize + 'px';
+                result.style.backgroundImage = `url(${imgElement.src})`;
+                result.style.backgroundRepeat = 'no-repeat';
+                result.style.backgroundSize = 'cover';
+
+                const container = imgElement.parentElement;
+                container.appendChild(lens);
+                container.appendChild(result);
+
+                const move = (e) => {
+                    const r = imgElement.getBoundingClientRect();
+                    const x = Math.max(0, Math.min(r.width, e.clientX - r.left));
+                    const y = Math.max(0, Math.min(r.height, e.clientY - r.top));
+
+                    const half = cfg.lensSize / 2;
+                    lens.style.left = (x - half) + 'px';
+                    lens.style.top = (y - half) + 'px';
+
+                    // přepočet pro pozadí ve výsledku
+                    const fx = cfg.zoomLevel, fy = cfg.zoomLevel;
+                    const bgW = r.width * fx;
+                    const bgH = r.height * fy;
+                    result.style.backgroundSize = `${bgW}px ${bgH}px`;
+                    const bx = -x * fx + cfg.resultSize / 2;
+                    const by = -y * fy + cfg.resultSize / 2;
+                    result.style.backgroundPosition = `${bx}px ${by}px`;
+                };
+
+                imgElement.addEventListener('mousemove', move);
+                return {
+                    destroy: () => { 
+                        imgElement.removeEventListener('mousemove', move); 
+                        lens.remove(); 
+                        result.remove(); 
+                    }
+                };
+            }
+
+            // ZoomableSceneImage komponenta
+            createZoomableSceneImage(imageUrl, magnifierConfig = {}) {
+                const imageId = 'zoomable-' + Date.now();
+                
+                return `
+                    <div class="magnifier-container">
+                        <img id="${imageId}" 
+                             src="${imageUrl}" 
+                             class="zoomable-scene-image magnifier-image" 
+                             alt="Zoomovatelný obrázek scény"
+                             onload="game.initMagnifier('${imageId}', ${JSON.stringify(magnifierConfig).replace(/"/g, '&quot;')})">
+                    </div>
+                `;
+            }
+
+            // Inicializace magnifieru pro konkrétní obrázek
+            initMagnifier(imageId, config) {
+                const imgElement = document.getElementById(imageId);
+                if (imgElement && config.enabled) {
+                    setTimeout(() => {
+                        this.useMagnifier(imgElement, config);
+                    }, 100);
+                }
+            }
+
+            // === DÁVKA 7-9: EVALUATORS + COMPLETE LOCK SYSTEM ===
+
+            // Základní evaluační funkce
+            eqText(input, expected, caseSensitive = false) {
+                const inputStr = String(input).trim();
+                const expectedStr = String(expected).trim();
+                
+                if (caseSensitive) {
+                    return inputStr === expectedStr;
+                } else {
+                    return inputStr.toLowerCase() === expectedStr.toLowerCase();
+                }
+            }
+
+            eqSeq(inputArray, expectedArray) {
+                if (inputArray.length !== expectedArray.length) return false;
+                return inputArray.every((val, idx) => val === expectedArray[idx]);
+            }
+
+            posStatus(inputArray, expectedArray) {
+                return inputArray.map((val, idx) => {
+                    if (val === '' || val === null || val === undefined) return 'empty';
+                    return val === expectedArray[idx] ? 'correct' : 'incorrect';
+                });
+            }
+
+            // Numerický evaluátor
+            evalNumeric(inputs, solution) {
+                const expected = solution.sequence || [];
+                const filled = inputs.filter(v => v !== '' && v !== null && v !== undefined);
+
+                if (filled.length < expected.length) {
+                    return {
+                        success: false,
+                        positions: this.posStatus(inputs, expected.map(String)),
+                        feedback: `Zadejte ${expected.length} čísel`
+                    };
+                }
+
+                const numbers = inputs.map(v => Number(v));
+                const ok = this.eqSeq(numbers, expected);
+                return {
+                    success: ok,
+                    positions: this.posStatus(inputs, expected.map(String)),
+                    feedback: ok ? 'Správně!' : 'Zkuste to znovu'
+                };
+            }
+
+            // Textový evaluátor
+            evalText(inputs, solution) {
+                const text = inputs.join('');
+                const expected = solution.word || '';
+                const caseSensitive = solution.case_sensitive || false;
+                
+                return {
+                    success: this.eqText(text, expected, caseSensitive),
+                    positions: this.posStatus(inputs, expected.split('')),
+                    feedback: text.length === expected.length ?
+                        (this.eqText(text, expected, caseSensitive) ? 'Správně!' : 'Nesprávné slovo') :
+                        `Zadejte ${expected.length} písmen`
+                };
+            }
+
+            // Šipkový evaluátor
+            evalArrows(inputs, solution) {
+                const arrows = inputs.filter(val => val !== '' && val !== null && val !== undefined);
+                const expected = solution.sequence || [];
+                
+                return {
+                    success: this.eqSeq(arrows, expected),
+                    positions: this.posStatus(inputs, expected),
+                    feedback: arrows.length === expected.length ?
+                        (this.eqSeq(arrows, expected) ? 'Správná sekvence!' : 'Špatné pořadí šipek') :
+                        `Zadejte ${expected.length} šipek`
+                };
+            }
+
+            // Barevný evaluátor
+            evalColors(inputs, solution) {
+                const colors = inputs.filter(val => val !== '' && val !== null && val !== undefined);
+                const expected = solution.sequence || [];
+                
+                return {
+                    success: this.eqSeq(colors, expected),
+                    positions: this.posStatus(inputs, expected),
+                    feedback: colors.length === expected.length ?
+                        (this.eqSeq(colors, expected) ? 'Správné barvy!' : 'Špatná kombinace barev') :
+                        `Vyberte ${expected.length} barev`
+                };
+            }
+
+            // Tvarový evaluátor
+            evalShapes(inputs, solution) {
+                const shapes = inputs.filter(val => val !== '' && val !== null && val !== undefined);
+                const expected = solution.sequence || [];
+                
+                return {
+                    success: this.eqSeq(shapes, expected),
+                    positions: this.posStatus(inputs, expected),
+                    feedback: shapes.length === expected.length ?
+                        (this.eqSeq(shapes, expected) ? 'Správné tvary!' : 'Špatná kombinace tvarů') :
+                        `Vyberte ${expected.length} tvarů`
+                };
+            }
+
+            // Cryptex evaluátor
+            evalCryptex(inputs, solution) {
+                const word = inputs.join('');
+                const expected = solution.word || '';
+                const caseSensitive = solution.case_sensitive || false;
+                
+                return {
+                    success: this.eqText(word, expected, caseSensitive),
+                    positions: this.posStatus(inputs, expected.split('')),
+                    feedback: word.length === expected.length ?
+                        (this.eqText(word, expected, caseSensitive) ? 'Cryptex odemčen!' : 'Špatné slovo') :
+                        `Nastavte ${expected.length} písmen`
+                };
+            }
+
+            // Quiz evaluátor
+            evalQuiz(selectedAnswer, solution) {
+                const correct = solution.correct_answer || 0;
+                
+                return {
+                    success: selectedAnswer === correct,
+                    feedback: selectedAnswer === correct ? 
+                        'Správná odpověď!' : 
+                        `Špatně. Správná odpověď je: ${solution.answers[correct]}`
+                };
+            }
+
+            // LockRouter - hlavní router pro zámky
+            createLockRouter(lockConfig) {
+                const mode = lockConfig.mode || 'numeric';
+                
+                switch (mode) {
+                    case 'numeric':
+                        return this.createNumericLock(lockConfig);
+                    case 'text':
+                        return this.createTextLock(lockConfig);
+                    case 'arrows':
+                        return this.createArrowLock(lockConfig);
+                    case 'colors':
+                        return this.createColorLock(lockConfig);
+                    case 'shapes':
+                        return this.createShapeLock(lockConfig);
+                    case 'cryptex':
+                        return this.createCryptexLock(lockConfig);
+                    case 'quiz':
+                        return this.createQuizLock(lockConfig);
+                    default:
+                        return this.createNumericLock(lockConfig);
+                }
+            }
+
+            // === DÁVKA 8: TEXTLOCK + NUMERICLOCK (plně funkční) ===
+
+            // Textový zámek s UiLabel + UiInput
+            createTextLock(config) {
+                const solution = config.solution || { word: 'ESCAPE', case_sensitive: false };
+                const lockId = 'lock-' + Date.now();
+                const caseSensitive = solution.case_sensitive || false;
+                
+                return `
+                    <div class="lock-container" id="${lockId}" data-config='${this.escapeAttr(JSON.stringify(config))}' role="group" aria-labelledby="${lockId}-title">
+                        <h3 id="${lockId}-title" class="text-lg font-bold mb-2">🔤 Textový zámek</h3>
+                        <p class="text-gray-600 mb-4">${config.hint || 'Zadejte správné slovo'}</p>
+                        
+                        <div class="ui-field">
+                            <label class="ui-label" for="${lockId}-input">
+                                Heslo ${caseSensitive ? '(rozlišuje velikost písmen)' : ''} (Enter = potvrdit):
+                            </label>
+                            <input type="text" 
+                                   id="${lockId}-input" 
+                                   class="ui-input" 
+                                   placeholder="Zadejte heslo..."
+                                   aria-describedby="${lockId}-feedback"
+                                   onkeypress="game.handleTextLockKeypress(event, '${lockId}')"
+                                   oninput="game.updateTextLockState('${lockId}')">
+                        </div>
+                        
+                        <div id="${lockId}-feedback" class="lock-feedback info" style="display: none;" aria-live="polite"></div>
+                        
+                        <div class="ui-actions">
+                            <button onclick="game.checkTextLock('${lockId}')" class="ui-btn primary" aria-describedby="${lockId}-feedback">
+                                🔓 Zkontrolovat (Enter)
+                            </button>
+                            <button onclick="game.resetTextLock('${lockId}')" class="ui-btn secondary">
+                                🔄 Reset
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Numerický zámek se Slots + SoftKeyboard
+            createNumericLock(config) {
+                const solution = config.solution || { sequence: [1, 2, 3, 4] };
+                const inputCount = solution.sequence ? solution.sequence.length : 4;
+                const lockId = 'lock-' + Date.now();
+                
+                console.log('Vytváření číselného zámku:', { solution, inputCount, config });
+                
+                // Vytvoření slotů
+                const slotsHtml = Array.from({ length: inputCount }, (_, i) => 
+                    `<div class="numeric-slot" 
+                          id="${lockId}-slot-${i}" 
+                          onclick="game.selectNumericSlot('${lockId}', ${i})">
+                        <span class="slot-content"></span>
+                    </div>`
+                ).join('');
+                
+                // Soft keyboard
+                const keyboardHtml = `
+                    <div class="soft-keyboard numeric-keyboard" role="group" aria-label="Číselná klávesnice">
+                        <div class="keyboard-row">
+                            ${[1, 2, 3].map(num => 
+                                `<button class="keyboard-key" onclick="game.inputNumericKey('${lockId}', '${num}')" aria-label="Číslo ${num}" tabindex="0">${num}</button>`
+                            ).join('')}
+                        </div>
+                        <div class="keyboard-row">
+                            ${[4, 5, 6].map(num => 
+                                `<button class="keyboard-key" onclick="game.inputNumericKey('${lockId}', '${num}')" aria-label="Číslo ${num}" tabindex="0">${num}</button>`
+                            ).join('')}
+                        </div>
+                        <div class="keyboard-row">
+                            ${[7, 8, 9].map(num => 
+                                `<button class="keyboard-key" onclick="game.inputNumericKey('${lockId}', '${num}')" aria-label="Číslo ${num}" tabindex="0">${num}</button>`
+                            ).join('')}
+                        </div>
+                        <div class="keyboard-row">
+                            <button class="keyboard-key" onclick="game.inputNumericKey('${lockId}', '0')" aria-label="Číslo 0" tabindex="0">0</button>
+                            <button class="keyboard-key backspace-key" onclick="game.numericBackspace('${lockId}')" aria-label="Smazat (Backspace)" tabindex="0">⌫</button>
+                        </div>
+                    </div>
+                `;
+                
+                return `
+                    <div class="lock-container" id="${lockId}" data-config='${this.escapeAttr(JSON.stringify(config))}' data-inputs='${this.escapeAttr(JSON.stringify(new Array(inputCount).fill('')))}' data-selected-slot="0" role="group" aria-labelledby="${lockId}-title">
+                        <h3 id="${lockId}-title" class="text-lg font-bold mb-2">🔢 Číselný zámek</h3>
+                        <p class="text-gray-600 mb-4">${config.hint || 'Zadejte správnou číselnou kombinaci'} (klávesy 0-9, Backspace, Enter)</p>
+                        
+                        <div class="numeric-slots-container" role="group" aria-label="Číselné pozice">
+                            ${slotsHtml}
+                        </div>
+                        
+                        ${keyboardHtml}
+                        
+                        <div id="${lockId}-feedback" class="lock-feedback info" style="display: none;" aria-live="polite"></div>
+                        
+                        <div class="ui-actions">
+                            <button onclick="game.checkNumericLock('${lockId}')" class="ui-btn primary" aria-describedby="${lockId}-feedback">
+                                🔓 Zkontrolovat (Enter)
+                            </button>
+                            <button onclick="game.resetNumericLock('${lockId}')" class="ui-btn secondary">
+                                🔄 Reset
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // === DÁVKA 9: ARROWS / COLORS / SHAPES (sjednocené UI) ===
+
+            // Šipkový zámek
+            createArrowLock(config) {
+                const solution = config.solution || { sequence: ['↑', '→', '↓', '←'] };
+                const inputCount = solution.sequence.length;
+                const lockId = 'lock-' + Date.now();
+                
+                const slotsHtml = Array.from({ length: inputCount }, (_, i) => 
+                    `<div class="sequence-slot arrow-slot" 
+                          id="${lockId}-slot-${i}" 
+                          onclick="game.selectSequenceSlot('${lockId}', ${i})">
+                        <span class="slot-content"></span>
+                    </div>`
+                ).join('');
+                
+                const keyboardHtml = `
+                    <div class="soft-keyboard arrow-keyboard">
+                        <div class="keyboard-row arrows-row">
+                            <button class="keyboard-key arrow-key" onclick="game.inputSequenceKey('${lockId}', '←')">←</button>
+                            <button class="keyboard-key arrow-key" onclick="game.inputSequenceKey('${lockId}', '↑')">↑</button>
+                            <button class="keyboard-key arrow-key" onclick="game.inputSequenceKey('${lockId}', '↓')">↓</button>
+                            <button class="keyboard-key arrow-key" onclick="game.inputSequenceKey('${lockId}', '→')">→</button>
+                        </div>
+                        <div class="keyboard-row">
+                            <button class="keyboard-key backspace-key" onclick="game.sequenceBackspace('${lockId}')">⌫</button>
+                        </div>
+                    </div>
+                `;
+                
+                return `
+                    <div class="lock-container" id="${lockId}" data-config='${this.escapeAttr(JSON.stringify(config))}' data-inputs='${this.escapeAttr(JSON.stringify(new Array(inputCount).fill('')))}' data-selected-slot="0">
+                        <h3 class="text-lg font-bold mb-2">🏹 Šipkový zámek</h3>
+                        <p class="text-gray-600 mb-4">${config.hint || 'Zadejte správnou sekvenci šipek'}</p>
+                        
+                        <div class="sequence-slots-container">
+                            ${slotsHtml}
+                        </div>
+                        
+                        ${keyboardHtml}
+                        
+                        <div id="${lockId}-feedback" class="lock-feedback info" style="display: none;"></div>
+                        
+                        <div class="ui-actions">
+                            <button onclick="game.checkSequenceLock('${lockId}', 'arrows')" class="ui-btn primary">
+                                🔓 Zkontrolovat
+                            </button>
+                            <button onclick="game.resetSequenceLock('${lockId}')" class="ui-btn secondary">
+                                🔄 Reset
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Barevný zámek
+            createColorLock(config) {
+                const solution = config.solution || { sequence: ['red', 'blue', 'green', 'yellow'] };
+                const inputCount = solution.sequence.length;
+                const lockId = 'lock-' + Date.now();
+                const showNames = config.show_names || false;
+                
+                // Základní barvy
+                const defaultColors = {
+                    'red': '#ef4444',
+                    'blue': '#3b82f6', 
+                    'green': '#22c55e',
+                    'yellow': '#eab308',
+                    'purple': '#a855f7',
+                    'orange': '#f97316',
+                    'pink': '#ec4899',
+                    'cyan': '#06b6d4'
+                };
+                
+                const colors = config.assets?.colors || defaultColors;
+                
+                const slotsHtml = Array.from({ length: inputCount }, (_, i) => 
+                    `<div class="sequence-slot color-slot" 
+                          id="${lockId}-slot-${i}" 
+                          onclick="game.selectSequenceSlot('${lockId}', ${i})">
+                        <div class="color-circle"></div>
+                        ${showNames ? '<span class="color-name"></span>' : ''}
+                    </div>`
+                ).join('');
+                
+                const colorKeysHtml = Object.entries(colors).map(([name, hex]) => 
+                    `<button class="keyboard-key color-key" 
+                             onclick="game.inputSequenceKey('${lockId}', '${name}')"
+                             style="background-color: ${hex}; border-color: ${hex};">
+                        ${showNames ? name : ''}
+                    </button>`
+                ).join('');
+                
+                const keyboardHtml = `
+                    <div class="soft-keyboard color-keyboard">
+                        <div class="keyboard-grid">
+                            ${colorKeysHtml}
+                        </div>
+                        <div class="keyboard-row">
+                            <button class="keyboard-key backspace-key" onclick="game.sequenceBackspace('${lockId}')">⌫</button>
+                        </div>
+                    </div>
+                `;
+                
+                return `
+                    <div class="lock-container" id="${lockId}" data-config='${this.escapeAttr(JSON.stringify(config))}' data-inputs='${this.escapeAttr(JSON.stringify(new Array(inputCount).fill('')))}' data-selected-slot="0" data-colors='${this.escapeAttr(JSON.stringify(colors))}'>
+                        <h3 class="text-lg font-bold mb-2">🎨 Barevný zámek</h3>
+                        <p class="text-gray-600 mb-4">${config.hint || 'Vyberte správnou kombinaci barev'}</p>
+                        
+                        <div class="sequence-slots-container">
+                            ${slotsHtml}
+                        </div>
+                        
+                        ${keyboardHtml}
+                        
+                        <div id="${lockId}-feedback" class="lock-feedback info" style="display: none;"></div>
+                        
+                        <div class="ui-actions">
+                            <button onclick="game.checkSequenceLock('${lockId}', 'colors')" class="ui-btn primary">
+                                🔓 Zkontrolovat
+                            </button>
+                            <button onclick="game.resetSequenceLock('${lockId}')" class="ui-btn secondary">
+                                🔄 Reset
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Tvarový zámek
+            createShapeLock(config) {
+                const solution = config.solution || { sequence: ['circle', 'square', 'triangle', 'star'] };
+                const inputCount = solution.sequence.length;
+                const lockId = 'lock-' + Date.now();
+                
+                // Základní SVG tvary
+                const defaultShapes = {
+                    'circle': '<circle cx="12" cy="12" r="8" fill="currentColor"/>',
+                    'square': '<rect x="4" y="4" width="16" height="16" fill="currentColor"/>',
+                    'triangle': '<polygon points="12,4 20,20 4,20" fill="currentColor"/>',
+                    'star': '<polygon points="12,2 15,8 22,8 17,13 19,20 12,16 5,20 7,13 2,8 9,8" fill="currentColor"/>',
+                    'diamond': '<polygon points="12,2 22,12 12,22 2,12" fill="currentColor"/>',
+                    'heart': '<path d="M12,21.35l-1.45-1.32C5.4,15.36,2,12.28,2,8.5 2,5.42,4.42,3,7.5,3c1.74,0,3.41,0.81,4.5,2.09C13.09,3.81,14.76,3,16.5,3 C19.58,3,22,5.42,22,8.5c0,3.78-3.4,6.86-8.55,11.54L12,21.35z" fill="currentColor"/>'
+                };
+                
+                const shapes = config.assets?.shape_svgs || defaultShapes;
+                
+                const slotsHtml = Array.from({ length: inputCount }, (_, i) => 
+                    `<div class="sequence-slot shape-slot" 
+                          id="${lockId}-slot-${i}" 
+                          onclick="game.selectSequenceSlot('${lockId}', ${i})">
+                        <div class="shape-container"></div>
+                    </div>`
+                ).join('');
+                
+                const shapeKeysHtml = Object.entries(shapes).map(([name, svg]) => 
+                    `<button class="keyboard-key shape-key" 
+                             onclick="game.inputSequenceKey('${lockId}', '${name}')"
+                             title="${name}">
+                        <svg width="24" height="24" viewBox="0 0 24 24">
+                            ${svg}
+                        </svg>
+                    </button>`
+                ).join('');
+                
+                const keyboardHtml = `
+                    <div class="soft-keyboard shape-keyboard">
+                        <div class="keyboard-grid">
+                            ${shapeKeysHtml}
+                        </div>
+                        <div class="keyboard-row">
+                            <button class="keyboard-key backspace-key" onclick="game.sequenceBackspace('${lockId}')">⌫</button>
+                        </div>
+                    </div>
+                `;
+                
+                return `
+                    <div class="lock-container" id="${lockId}" data-config='${this.escapeAttr(JSON.stringify(config))}' data-inputs='${this.escapeAttr(JSON.stringify(new Array(inputCount).fill('')))}' data-selected-slot="0" data-shapes='${this.escapeAttr(JSON.stringify(shapes))}'>
+                        <h3 class="text-lg font-bold mb-2">🔷 Tvarový zámek</h3>
+                        <p class="text-gray-600 mb-4">${config.hint || 'Vyberte správnou kombinaci tvarů'}</p>
+                        
+                        <div class="sequence-slots-container">
+                            ${slotsHtml}
+                        </div>
+                        
+                        ${keyboardHtml}
+                        
+                        <div id="${lockId}-feedback" class="lock-feedback info" style="display: none;"></div>
+                        
+                        <div class="ui-actions">
+                            <button onclick="game.checkSequenceLock('${lockId}', 'shapes')" class="ui-btn primary">
+                                🔓 Zkontrolovat
+                            </button>
+                            <button onclick="game.resetSequenceLock('${lockId}')" class="ui-btn secondary">
+                                🔄 Reset
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Cryptex zámek s otáčivými kolečky
+            createCryptexLock(config) {
+                const solution = config.solution || { word: 'ESCAPE', case_sensitive: false };
+                const inputCount = solution.word.length;
+                const lockId = 'lock-' + Date.now();
+                
+                // Základní sady znaků pro kolečka
+                const defaultWheels = Array.from({ length: inputCount }, () => 
+                    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+                );
+                
+                const wheels = config.assets?.keyboards?.cryptex?.wheels || defaultWheels;
+                
+                // Vytvoření sloupců s kolečky
+                const columnsHtml = Array.from({ length: inputCount }, (_, i) => {
+                    const wheelChars = wheels[i] || wheels[0] || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+                    const startIndex = 0;
+                    
+                    return `
+                        <div class="cryptex-column" data-wheel-index="${i}" data-current-index="${startIndex}">
+                            <button class="cryptex-arrow cryptex-up" onclick="game.rotateCryptexWheel('${lockId}', ${i}, -1)">↑</button>
+                            <div class="cryptex-wheel">
+                                <div class="cryptex-char" id="${lockId}-char-${i}">${wheelChars[startIndex]}</div>
+                            </div>
+                            <button class="cryptex-arrow cryptex-down" onclick="game.rotateCryptexWheel('${lockId}', ${i}, 1)">↓</button>
+                        </div>
+                    `;
+                }).join('');
+                
+                return `
+                    <div class="lock-container cryptex-container" id="${lockId}" data-config='${this.escapeAttr(JSON.stringify(config))}' data-wheels='${this.escapeAttr(JSON.stringify(wheels))}' data-positions='${this.escapeAttr(JSON.stringify(new Array(inputCount).fill(0)))}'>
+                        <h3 class="text-lg font-bold mb-2">🗝️ Cryptex</h3>
+                        <p class="text-gray-600 mb-4">${config.hint || 'Otáčejte kolečka pro nastavení správného slova'}</p>
+                        
+                        <div class="cryptex-wheels-container">
+                            ${columnsHtml}
+                        </div>
+                        
+                        <div id="${lockId}-feedback" class="lock-feedback info" style="display: none;"></div>
+                        
+                        <div class="ui-actions">
+                            <button onclick="game.checkCryptexLock('${lockId}')" class="ui-btn primary">
+                                🔓 Zkontrolovat
+                            </button>
+                            <button onclick="game.resetCryptexLock('${lockId}')" class="ui-btn secondary">
+                                🔄 Reset
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Quiz zámek s náhodnými otázkami
+            createQuizLock(config) {
+                const lockId = 'lock-' + Date.now();
+                const questions = config.questions || [
+                    {
+                        question: "Jaká je hlavní barva oblohy?",
+                        answers: ["Červená", "Modrá", "Zelená", "Žlutá"],
+                        correct_answer: 1
+                    }
+                ];
+                
+                const minRatio = config.min_ratio || config.pass_ratio || 0.8;
+                const drawLimit = config.limit_draw || Math.min(5, questions.length);
+                
+                // Náhodný výběr otázek
+                const shuffledQuestions = [...questions].sort(() => Math.random() - 0.5);
+                const selectedQuestions = shuffledQuestions.slice(0, drawLimit);
+                
+                const questionsHtml = selectedQuestions.map((q, index) => {
+                    const answersHtml = q.answers.map((answer, answerIndex) => 
+                        `<label class="quiz-answer">
+                            <input type="radio" name="${lockId}-q${index}" value="${answerIndex}" onchange="game.updateQuizProgress('${lockId}')">
+                            <span class="quiz-answer-text">${answer}</span>
+                        </label>`
+                    ).join('');
+                    
+                    return `
+                        <div class="quiz-question" data-question-index="${index}" data-correct="${q.correct_answer}">
+                            <h4 class="quiz-question-text">${index + 1}. ${q.question}</h4>
+                            <div class="quiz-answers">
+                                ${answersHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                return `
+                    <div class="lock-container quiz-container" id="${lockId}" data-config='${this.escapeAttr(JSON.stringify(config))}' data-questions='${this.escapeAttr(JSON.stringify(selectedQuestions))}' data-min-ratio="${minRatio}">
+                        <h3 class="text-lg font-bold mb-2">❓ Vědomostní test</h3>
+                        <p class="text-gray-600 mb-4">${config.hint || `Odpovězte správně na alespoň ${Math.ceil(selectedQuestions.length * minRatio)} z ${selectedQuestions.length} otázek`}</p>
+                        
+                        <div class="quiz-progress mb-4">
+                            <div class="quiz-progress-bar">
+                                <div class="quiz-progress-fill" id="${lockId}-progress" style="width: 0%"></div>
+                            </div>
+                            <div class="quiz-progress-text" id="${lockId}-progress-text">0 / ${selectedQuestions.length} odpovězeno</div>
+                        </div>
+                        
+                        <div class="quiz-questions">
+                            ${questionsHtml}
+                        </div>
+                        
+                        <div id="${lockId}-feedback" class="lock-feedback info" style="display: none;"></div>
+                        
+                        <div class="ui-actions">
+                            <button onclick="game.checkQuizLock('${lockId}')" class="ui-btn primary" id="${lockId}-submit" disabled>
+                                ✓ Odevzdat odpovědi
+                            </button>
+                            <button onclick="game.resetQuizLock('${lockId}')" class="ui-btn secondary">
+                                🔄 Začít znovu
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // === DÁVKA 8: TEXT LOCK METHODS ===
+
+            // Obsluha klávesy Enter pro textový zámek
+            handleTextLockKeypress(event, lockId) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    this.checkTextLock(lockId);
+                }
+            }
+
+            // Aktualizace stavu textového zámku
+            updateTextLockState(lockId) {
+                const input = document.getElementById(lockId + '-input');
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                
+                if (input && feedbackElement) {
+                    // Skrytí zpětné vazby při psaní
+                    feedbackElement.style.display = 'none';
+                    
+                    // Odstranění stavových tříd
+                    input.classList.remove('correct', 'incorrect');
+                }
+            }
+
+            // Kontrola textového zámku
+            checkTextLock(lockId) {
+                const lockElement = document.getElementById(lockId);
+                const input = document.getElementById(lockId + '-input');
+                if (!lockElement || !input) return;
+                
+                const config = JSON.parse(lockElement.dataset.config);
+                const inputValue = input.value;
+                const inputArray = inputValue.split('');
+                
+                const result = this.evalText(inputArray, config.solution);
+                this.showLockFeedback(lockId, result);
+                
+                // Vizuální zpětná vazba na input
+                input.classList.remove('correct', 'incorrect');
+                input.classList.add(result.success ? 'correct' : 'incorrect');
+                
+                if (result.success) {
+                    setTimeout(() => {
+                        this.onResolve(this.state.currentId, true);
+                    }, 1500);
+                }
+            }
+
+            // Reset textového zámku
+            resetTextLock(lockId) {
+                const input = document.getElementById(lockId + '-input');
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                
+                if (input) {
+                    input.value = '';
+                    input.classList.remove('correct', 'incorrect');
+                }
+                
+                if (feedbackElement) {
+                    feedbackElement.style.display = 'none';
+                }
+            }
+
+            // === DÁVKA 8: NUMERIC LOCK METHODS ===
+
+            // Výběr numerického slotu
+            selectNumericSlot(lockId, slotIndex) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                // Odstranění selected třídy ze všech slotů
+                lockElement.querySelectorAll('.numeric-slot').forEach(slot => {
+                    slot.classList.remove('selected');
+                });
+                
+                // Přidání selected třídy k vybranému slotu
+                const selectedSlot = document.getElementById(`${lockId}-slot-${slotIndex}`);
+                if (selectedSlot) {
+                    selectedSlot.classList.add('selected');
+                }
+                
+                // Uložení vybraného slotu
+                lockElement.dataset.selectedSlot = slotIndex;
+            }
+
+            // Vstup číslice do numerického zámku
+            inputNumericKey(lockId, digit) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const selectedSlot = parseInt(lockElement.dataset.selectedSlot || '0');
+                const inputs = JSON.parse(lockElement.dataset.inputs || '[]');
+                
+                // Nastavení hodnoty do vybraného slotu
+                inputs[selectedSlot] = digit;
+                lockElement.dataset.inputs = JSON.stringify(inputs);
+                
+                // Aktualizace zobrazení slotu
+                const slotElement = document.getElementById(`${lockId}-slot-${selectedSlot}`);
+                if (slotElement) {
+                    const content = slotElement.querySelector('.slot-content');
+                    if (content) {
+                        content.textContent = digit;
+                    }
+                }
+                
+                // Automatický přechod na další slot
+                const nextSlot = selectedSlot + 1;
+                if (nextSlot < inputs.length) {
+                    this.selectNumericSlot(lockId, nextSlot);
+                }
+                
+                // Skrytí zpětné vazby
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                if (feedbackElement) {
+                    feedbackElement.style.display = 'none';
+                }
+            }
+
+            // Backspace pro numerický zámek
+            numericBackspace(lockId) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const selectedSlot = parseInt(lockElement.dataset.selectedSlot || '0');
+                const inputs = JSON.parse(lockElement.dataset.inputs || '[]');
+                
+                // Vymazání aktuálního slotu nebo přechod na předchozí
+                if (inputs[selectedSlot] !== '') {
+                    inputs[selectedSlot] = '';
+                } else if (selectedSlot > 0) {
+                    inputs[selectedSlot - 1] = '';
+                    this.selectNumericSlot(lockId, selectedSlot - 1);
+                }
+                
+                lockElement.dataset.inputs = JSON.stringify(inputs);
+                
+                // Aktualizace zobrazení
+                this.updateNumericSlotsDisplay(lockId, inputs);
+                
+                // Skrytí zpětné vazby
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                if (feedbackElement) {
+                    feedbackElement.style.display = 'none';
+                }
+            }
+
+            // Aktualizace zobrazení numerických slotů
+            updateNumericSlotsDisplay(lockId, inputs) {
+                inputs.forEach((value, index) => {
+                    const slotElement = document.getElementById(`${lockId}-slot-${index}`);
+                    if (slotElement) {
+                        const content = slotElement.querySelector('.slot-content');
+                        if (content) {
+                            content.textContent = value || '';
+                        }
+                        // Odstranění stavových tříd
+                        slotElement.classList.remove('correct', 'incorrect');
+                    }
+                });
+            }
+
+            // Kontrola numerického zámku
+            checkNumericLock(lockId) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const config = JSON.parse(lockElement.dataset.config);
+                const inputs = JSON.parse(lockElement.dataset.inputs || '[]');
+                
+                const result = this.evalNumeric(inputs, config.solution);
+                this.showLockFeedback(lockId, result);
+                
+                // Vizuální zpětná vazba na sloty
+                if (result.positions) {
+                    result.positions.forEach((status, index) => {
+                        const slot = document.getElementById(`${lockId}-slot-${index}`);
+                        if (slot) {
+                            slot.classList.remove('correct', 'incorrect');
+                            if (status === 'correct') slot.classList.add('correct');
+                            if (status === 'incorrect') slot.classList.add('incorrect');
+                        }
+                    });
+                }
+                
+                if (result.success) {
+                    setTimeout(() => {
+                        this.onResolve(this.state.currentId, true);
+                    }, 1500);
+                }
+            }
+
+            // Reset numerického zámku
+            resetNumericLock(lockId) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const config = JSON.parse(lockElement.dataset.config);
+                const inputCount = config.solution.sequence.length;
+                const emptyInputs = new Array(inputCount).fill('');
+                
+                lockElement.dataset.inputs = JSON.stringify(emptyInputs);
+                lockElement.dataset.selectedSlot = '0';
+                
+                this.updateNumericSlotsDisplay(lockId, emptyInputs);
+                this.selectNumericSlot(lockId, 0);
+                
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                if (feedbackElement) {
+                    feedbackElement.style.display = 'none';
+                }
+            }
+
+            // === DÁVKA 9: SEQUENCE LOCK METHODS (Arrows, Colors, Shapes) ===
+
+            // Výběr slotu v sekvenci
+            selectSequenceSlot(lockId, slotIndex) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                // Odstranění selected třídy ze všech slotů
+                lockElement.querySelectorAll('.sequence-slot').forEach(slot => {
+                    slot.classList.remove('selected');
+                });
+                
+                // Přidání selected třídy k vybranému slotu
+                const selectedSlot = document.getElementById(`${lockId}-slot-${slotIndex}`);
+                if (selectedSlot) {
+                    selectedSlot.classList.add('selected');
+                }
+                
+                // Uložení vybraného slotu
+                lockElement.dataset.selectedSlot = slotIndex;
+            }
+
+            // Vstup hodnoty do sekvence
+            inputSequenceKey(lockId, value) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const selectedSlot = parseInt(lockElement.dataset.selectedSlot || '0');
+                const inputs = JSON.parse(lockElement.dataset.inputs || '[]');
+                
+                // Nastavení hodnoty do vybraného slotu
+                inputs[selectedSlot] = value;
+                lockElement.dataset.inputs = JSON.stringify(inputs);
+                
+                // Aktualizace zobrazení slotu
+                this.updateSequenceSlotDisplay(lockId, selectedSlot, value);
+                
+                // Automatický přechod na další slot
+                const nextSlot = selectedSlot + 1;
+                if (nextSlot < inputs.length) {
+                    this.selectSequenceSlot(lockId, nextSlot);
+                }
+                
+                // Skrytí zpětné vazby
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                if (feedbackElement) {
+                    feedbackElement.style.display = 'none';
+                }
+            }
+
+            // Aktualizace zobrazení slotu sekvence
+            updateSequenceSlotDisplay(lockId, slotIndex, value) {
+                const slotElement = document.getElementById(`${lockId}-slot-${slotIndex}`);
+                if (!slotElement) return;
+                
+                const lockElement = document.getElementById(lockId);
+                
+                if (slotElement.classList.contains('arrow-slot')) {
+                    // Šipkový slot
+                    const content = slotElement.querySelector('.slot-content');
+                    if (content) {
+                        content.textContent = value || '';
+                    }
+                } else if (slotElement.classList.contains('color-slot')) {
+                    // Barevný slot
+                    const circle = slotElement.querySelector('.color-circle');
+                    const nameElement = slotElement.querySelector('.color-name');
+                    const colors = JSON.parse(lockElement.dataset.colors || '{}');
+                    
+                    if (circle && value && colors[value]) {
+                        circle.style.backgroundColor = colors[value];
+                        circle.style.borderColor = colors[value];
+                    } else if (circle) {
+                        circle.style.backgroundColor = 'var(--neutral-100)';
+                        circle.style.borderColor = 'var(--neutral-300)';
+                    }
+                    
+                    if (nameElement) {
+                        nameElement.textContent = value || '';
+                    }
+                } else if (slotElement.classList.contains('shape-slot')) {
+                    // Tvarový slot
+                    const container = slotElement.querySelector('.shape-container');
+                    const shapes = JSON.parse(lockElement.dataset.shapes || '{}');
+                    
+                    if (container && value && shapes[value]) {
+                        container.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24">${shapes[value]}</svg>`;
+                    } else if (container) {
+                        container.innerHTML = '';
+                    }
+                }
+                
+                // Odstranění stavových tříd
+                slotElement.classList.remove('correct', 'incorrect');
+            }
+
+            // Backspace pro sekvence
+            sequenceBackspace(lockId) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const selectedSlot = parseInt(lockElement.dataset.selectedSlot || '0');
+                const inputs = JSON.parse(lockElement.dataset.inputs || '[]');
+                
+                // Vymazání aktuálního slotu nebo přechod na předchozí
+                if (inputs[selectedSlot] !== '') {
+                    inputs[selectedSlot] = '';
+                    this.updateSequenceSlotDisplay(lockId, selectedSlot, '');
+                } else if (selectedSlot > 0) {
+                    inputs[selectedSlot - 1] = '';
+                    this.updateSequenceSlotDisplay(lockId, selectedSlot - 1, '');
+                    this.selectSequenceSlot(lockId, selectedSlot - 1);
+                }
+                
+                lockElement.dataset.inputs = JSON.stringify(inputs);
+                
+                // Skrytí zpětné vazby
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                if (feedbackElement) {
+                    feedbackElement.style.display = 'none';
+                }
+            }
+
+            // Kontrola sekvence zámku
+            checkSequenceLock(lockId, type) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const config = JSON.parse(lockElement.dataset.config);
+                const inputs = JSON.parse(lockElement.dataset.inputs || '[]');
+                
+                let result;
+                switch (type) {
+                    case 'arrows':
+                        result = this.evalArrows(inputs, config.solution);
+                        break;
+                    case 'colors':
+                        result = this.evalColors(inputs, config.solution);
+                        break;
+                    case 'shapes':
+                        result = this.evalShapes(inputs, config.solution);
+                        break;
+                    default:
+                        result = { success: false, feedback: 'Neznámý typ sekvence' };
+                }
+                
+                this.showLockFeedback(lockId, result);
+                
+                // Vizuální zpětná vazba na sloty
+                if (result.positions) {
+                    result.positions.forEach((status, index) => {
+                        const slot = document.getElementById(`${lockId}-slot-${index}`);
+                        if (slot) {
+                            slot.classList.remove('correct', 'incorrect');
+                            if (status === 'correct') slot.classList.add('correct');
+                            if (status === 'incorrect') slot.classList.add('incorrect');
+                        }
+                    });
+                }
+                
+                if (result.success) {
+                    setTimeout(() => {
+                        this.onResolve(this.state.currentId, true);
+                    }, 1500);
+                }
+            }
+
+            // Reset sekvence zámku
+            resetSequenceLock(lockId) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const config = JSON.parse(lockElement.dataset.config);
+                const inputCount = config.solution.sequence.length;
+                const emptyInputs = new Array(inputCount).fill('');
+                
+                lockElement.dataset.inputs = JSON.stringify(emptyInputs);
+                lockElement.dataset.selectedSlot = '0';
+                
+                // Reset zobrazení všech slotů
+                for (let i = 0; i < inputCount; i++) {
+                    this.updateSequenceSlotDisplay(lockId, i, '');
+                }
+                
+                this.selectSequenceSlot(lockId, 0);
+                
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                if (feedbackElement) {
+                    feedbackElement.style.display = 'none';
+                }
+            }
+
+            // === DÁVKA 10: CRYPTEX METHODS ===
+
+            // Otočení kolečka cryptexu
+            rotateCryptexWheel(lockId, wheelIndex, direction) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const wheels = JSON.parse(lockElement.dataset.wheels || '[]');
+                const positions = JSON.parse(lockElement.dataset.positions || '[]');
+                
+                if (!wheels[wheelIndex] || positions[wheelIndex] === undefined) return;
+                
+                const wheelChars = wheels[wheelIndex];
+                const currentPos = positions[wheelIndex];
+                
+                // Výpočet nové pozice (cyklické otáčení)
+                let newPos = currentPos + direction;
+                if (newPos < 0) newPos = wheelChars.length - 1;
+                if (newPos >= wheelChars.length) newPos = 0;
+                
+                positions[wheelIndex] = newPos;
+                lockElement.dataset.positions = JSON.stringify(positions);
+                
+                // Aktualizace zobrazení
+                const charElement = document.getElementById(`${lockId}-char-${wheelIndex}`);
+                if (charElement) {
+                    charElement.textContent = wheelChars[newPos];
+                    
+                    // Animace otáčení
+                    charElement.style.transform = direction > 0 ? 'translateY(-10px)' : 'translateY(10px)';
+                    charElement.style.opacity = '0.5';
+                    
+                    setTimeout(() => {
+                        charElement.style.transform = 'translateY(0)';
+                        charElement.style.opacity = '1';
+                    }, 150);
+                }
+                
+                // Skrytí zpětné vazby
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                if (feedbackElement) {
+                    feedbackElement.style.display = 'none';
+                }
+                
+                // Odstranění stavových tříd
+                const wheelElement = charElement?.parentElement;
+                if (wheelElement) {
+                    wheelElement.classList.remove('correct', 'incorrect');
+                }
+            }
+
+            // Kontrola cryptex zámku
+            checkCryptexLock(lockId) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const config = JSON.parse(lockElement.dataset.config);
+                const wheels = JSON.parse(lockElement.dataset.wheels || '[]');
+                const positions = JSON.parse(lockElement.dataset.positions || '[]');
+                
+                // Sestavení aktuálního slova
+                const currentWord = positions.map((pos, index) => {
+                    const wheelChars = wheels[index] || [];
+                    return wheelChars[pos] || '';
+                }).join('');
+                
+                const result = this.evalCryptex([currentWord], config.solution);
+                this.showLockFeedback(lockId, result);
+                
+                // Vizuální zpětná vazba na kolečka
+                positions.forEach((pos, index) => {
+                    const charElement = document.getElementById(`${lockId}-char-${index}`);
+                    const wheelElement = charElement?.parentElement;
+                    if (wheelElement) {
+                        wheelElement.classList.remove('correct', 'incorrect');
+                        
+                        const expectedChar = config.solution.word[index];
+                        const currentChar = wheels[index]?.[pos] || '';
+                        const caseSensitive = config.solution.case_sensitive || false;
+                        
+                        const isCorrect = caseSensitive ? 
+                            currentChar === expectedChar : 
+                            currentChar.toLowerCase() === expectedChar.toLowerCase();
+                        
+                        wheelElement.classList.add(isCorrect ? 'correct' : 'incorrect');
+                    }
+                });
+                
+                if (result.success) {
+                    setTimeout(() => {
+                        this.onResolve(this.state.currentId, true);
+                    }, 1500);
+                }
+            }
+
+            // Reset cryptex zámku
+            resetCryptexLock(lockId) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const config = JSON.parse(lockElement.dataset.config);
+                const wheels = JSON.parse(lockElement.dataset.wheels || '[]');
+                const resetPositions = new Array(wheels.length).fill(0);
+                
+                lockElement.dataset.positions = JSON.stringify(resetPositions);
+                
+                // Reset zobrazení všech koleček
+                resetPositions.forEach((pos, index) => {
+                    const charElement = document.getElementById(`${lockId}-char-${index}`);
+                    const wheelElement = charElement?.parentElement;
+                    
+                    if (charElement && wheels[index]) {
+                        charElement.textContent = wheels[index][pos] || '';
+                        charElement.style.transform = 'translateY(0)';
+                        charElement.style.opacity = '1';
+                    }
+                    
+                    if (wheelElement) {
+                        wheelElement.classList.remove('correct', 'incorrect');
+                    }
+                });
+                
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                if (feedbackElement) {
+                    feedbackElement.style.display = 'none';
+                }
+            }
+
+            // === DÁVKA 10: QUIZ METHODS ===
+
+            // Aktualizace pokroku kvízu
+            updateQuizProgress(lockId) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const questions = lockElement.querySelectorAll('.quiz-question');
+                const totalQuestions = questions.length;
+                let answeredCount = 0;
+                
+                questions.forEach((question, index) => {
+                    const selectedAnswer = lockElement.querySelector(`input[name="${lockId}-q${index}"]:checked`);
+                    if (selectedAnswer) {
+                        answeredCount++;
+                        question.classList.add('answered');
+                        
+                        // Označení vybrané odpovědi
+                        question.querySelectorAll('.quiz-answer').forEach(answer => {
+                            answer.classList.remove('selected');
+                        });
+                        selectedAnswer.closest('.quiz-answer').classList.add('selected');
+                    } else {
+                        question.classList.remove('answered');
+                    }
+                });
+                
+                // Aktualizace progress baru
+                const progressFill = document.getElementById(`${lockId}-progress`);
+                const progressText = document.getElementById(`${lockId}-progress-text`);
+                const submitButton = document.getElementById(`${lockId}-submit`);
+                
+                if (progressFill) {
+                    const percentage = (answeredCount / totalQuestions) * 100;
+                    progressFill.style.width = percentage + '%';
+                }
+                
+                if (progressText) {
+                    progressText.textContent = `${answeredCount} / ${totalQuestions} odpovězeno`;
+                }
+                
+                if (submitButton) {
+                    submitButton.disabled = answeredCount < totalQuestions;
+                }
+                
+                // Skrytí zpětné vazby
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                if (feedbackElement) {
+                    feedbackElement.style.display = 'none';
+                }
+            }
+
+            // Kontrola quiz zámku
+            checkQuizLock(lockId) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const config = JSON.parse(lockElement.dataset.config);
+                const questions = JSON.parse(lockElement.dataset.questions || '[]');
+                const minRatio = parseFloat(lockElement.dataset.minRatio || '0.8');
+                
+                let correctAnswers = 0;
+                const userAnswers = [];
+                
+                // Vyhodnocení odpovědí
+                questions.forEach((question, index) => {
+                    const selectedAnswer = lockElement.querySelector(`input[name="${lockId}-q${index}"]:checked`);
+                    const selectedValue = selectedAnswer ? parseInt(selectedAnswer.value) : -1;
+                    const isCorrect = selectedValue === question.correct_answer;
+                    
+                    userAnswers.push(selectedValue);
+                    if (isCorrect) correctAnswers++;
+                    
+                    // Vizuální zpětná vazba na otázku
+                    const questionElement = lockElement.querySelector(`[data-question-index="${index}"]`);
+                    if (questionElement) {
+                        questionElement.classList.remove('correct', 'incorrect');
+                        questionElement.classList.add(isCorrect ? 'correct' : 'incorrect');
+                        
+                        // Označení správných a špatných odpovědí
+                        questionElement.querySelectorAll('.quiz-answer').forEach((answerElement, answerIndex) => {
+                            answerElement.classList.remove('correct-answer', 'wrong-answer');
+                            
+                            if (answerIndex === question.correct_answer) {
+                                answerElement.classList.add('correct-answer');
+                            } else if (answerIndex === selectedValue && !isCorrect) {
+                                answerElement.classList.add('wrong-answer');
+                            }
+                        });
+                    }
+                });
+                
+                const successRatio = correctAnswers / questions.length;
+                const result = {
+                    success: successRatio >= minRatio,
+                    feedback: `Správně ${correctAnswers} z ${questions.length} otázek (${Math.round(successRatio * 100)}%). ${
+                        successRatio >= minRatio ? 'Test úspěšně splněn!' : `Potřebujete alespoň ${Math.ceil(questions.length * minRatio)} správných odpovědí.`
+                    }`
+                };
+                
+                this.showLockFeedback(lockId, result);
+                
+                if (result.success) {
+                    setTimeout(() => {
+                        this.onResolve(this.state.currentId, true);
+                    }, 2000);
+                }
+            }
+
+            // Reset quiz zámku
+            resetQuizLock(lockId) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                // Vymazání všech odpovědí
+                lockElement.querySelectorAll('input[type="radio"]').forEach(input => {
+                    input.checked = false;
+                });
+                
+                // Reset vizuálních stavů
+                lockElement.querySelectorAll('.quiz-question').forEach(question => {
+                    question.classList.remove('answered', 'correct', 'incorrect');
+                });
+                
+                lockElement.querySelectorAll('.quiz-answer').forEach(answer => {
+                    answer.classList.remove('selected', 'correct-answer', 'wrong-answer');
+                });
+                
+                // Reset progress baru
+                const progressFill = document.getElementById(`${lockId}-progress`);
+                const progressText = document.getElementById(`${lockId}-progress-text`);
+                const submitButton = document.getElementById(`${lockId}-submit`);
+                
+                if (progressFill) progressFill.style.width = '0%';
+                if (progressText) {
+                    const totalQuestions = lockElement.querySelectorAll('.quiz-question').length;
+                    progressText.textContent = `0 / ${totalQuestions} odpovězeno`;
+                }
+                if (submitButton) submitButton.disabled = true;
+                
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                if (feedbackElement) {
+                    feedbackElement.style.display = 'none';
+                }
+            }
+
+            // === LEGACY METHODS (for compatibility) ===
+
+            // Aktualizace vstupu zámku (legacy)
+            updateLockInput(lockId, index, value) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                // Uložení hodnoty do data atributu
+                if (!lockElement.dataset.inputs) {
+                    lockElement.dataset.inputs = JSON.stringify({});
+                }
+                
+                const inputs = JSON.parse(lockElement.dataset.inputs);
+                inputs[index] = value;
+                lockElement.dataset.inputs = JSON.stringify(inputs);
+            }
+
+            // Kontrola zámku (legacy)
+            checkLock(lockId, mode) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                const inputs = JSON.parse(lockElement.dataset.inputs || '{}');
+                const inputArray = Object.values(inputs);
+                
+                // Získání konfigurace zámku (pro demo použijeme základní)
+                const config = this.getLockConfig(mode);
+                
+                let result;
+                switch (mode) {
+                    case 'numeric':
+                        result = this.evalNumeric(inputArray, config.solution);
+                        break;
+                    case 'text':
+                        result = this.evalText(inputArray, config.solution);
+                        break;
+                    default:
+                        result = { success: false, feedback: 'Neznámý typ zámku' };
+                }
+                
+                this.showLockFeedback(lockId, result);
+                
+                if (result.success) {
+                    setTimeout(() => {
+                        this.onResolve(this.state.currentId, true);
+                    }, 1500);
+                }
+            }
+
+            // Získání konfigurace zámku pro demo
+            getLockConfig(mode) {
+                const configs = {
+                    numeric: { solution: { sequence: [1, 2, 3, 4] } },
+                    text: { solution: { word: 'ESCAPE' } }
+                };
+                return configs[mode] || configs.numeric;
+            }
+
+            // Zobrazení zpětné vazby zámku s A11y podporou
+            showLockFeedback(lockId, result) {
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                if (!feedbackElement) return;
+                
+                feedbackElement.style.display = 'block';
+                feedbackElement.textContent = result.feedback;
+                feedbackElement.className = `lock-feedback ${result.success ? 'success' : 'error'}`;
+                
+                // Oznámení pro screen readery
+                if (result.success) {
+                    this.announceToScreenReader(`Zámek odemčen! ${result.feedback}`);
+                } else {
+                    this.announceToScreenReader(`Nesprávně. ${result.feedback}`);
+                }
+                
+                // Aktualizace stylů vstupů (legacy)
+                if (result.positions) {
+                    result.positions.forEach((status, index) => {
+                        const input = document.getElementById(`${lockId}-${index}`);
+                        if (input) {
+                            input.classList.remove('correct', 'incorrect');
+                            if (status === 'correct') input.classList.add('correct');
+                            if (status === 'incorrect') input.classList.add('incorrect');
+                        }
+                    });
+                }
+            }
+
+            // Reset zámku (legacy)
+            resetLock(lockId) {
+                const lockElement = document.getElementById(lockId);
+                if (!lockElement) return;
+                
+                // Vymazání všech vstupů
+                lockElement.querySelectorAll('.lock-input').forEach(input => {
+                    input.value = '';
+                    input.classList.remove('correct', 'incorrect');
+                });
+                
+                // Reset dat
+                lockElement.dataset.inputs = JSON.stringify({});
+                
+                // Skrytí zpětné vazby
+                const feedbackElement = document.getElementById(lockId + '-feedback');
+                if (feedbackElement) {
+                    feedbackElement.style.display = 'none';
+                }
+            }
+
+            // TextZoomControls komponenta s A11y podporou
+            createTextZoomControls(textZoomConfig, currentSize = 'medium') {
+                if (!textZoomConfig || !textZoomConfig.enabled) {
+                    return '';
+                }
+
+                const levels = textZoomConfig.levels || [
+                    { id: 'small', label: 'A', title: 'Malé písmo' },
+                    { id: 'medium', label: 'A+', title: 'Střední písmo' },
+                    { id: 'large', label: 'A++', title: 'Velké písmo' }
+                ];
+
+                const buttonsHtml = levels.map(level => 
+                    `<button class="text-zoom-btn ${level.id === currentSize ? 'active' : ''}" 
+                             onclick="game.setTextSize('${level.id}')" 
+                             title="${level.title}"
+                             aria-pressed="${level.id === currentSize}"
+                             aria-label="${level.title}">
+                        ${level.label}
+                        <span class="sr-only">${level.title}</span>
+                    </button>`
+                ).join('');
+
+                return `
+                    <div class="text-zoom-controls" role="group" aria-label="Ovládání velikosti textu">
+                        <span class="text-zoom-label">Velikost textu (klávesa Z):</span>
+                        ${buttonsHtml}
+                    </div>
+                `;
+            }
+
+            // InfoBubble komponenta
+            createInfoBubble(info, onContinue, ui = {}) {
+                const textZoomHtml = this.createTextZoomControls(ui.text_zoom, this.state.textSize);
+                const textSizeClass = `text-size-${this.state.textSize || 'medium'}`;
+
+                return `
+                    <div class="info-bubble max-w-2xl w-full">
+                        ${textZoomHtml}
+                        <div class="info-bubble-content ${textSizeClass}">
+                            <h2 class="info-bubble-title text-2xl">${info.title || 'Informace'}</h2>
+                            <div class="info-bubble-text">${info.description || info.text || ''}</div>
+                        </div>
+                        <div class="ui-actions">
+                            <button onclick="${onContinue}" class="ui-btn primary">
+                                ▶ Pokračovat
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Nastavení velikosti textu s A11y podporou
+            setTextSize(size) {
+                this.state.textSize = size;
+                
+                // Aktualizace všech text-zoom tlačítek
+                document.querySelectorAll('.text-zoom-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.setAttribute('aria-pressed', 'false');
+                });
+                
+                const activeBtn = document.querySelector(`[onclick="game.setTextSize('${size}')"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                    activeBtn.setAttribute('aria-pressed', 'true');
+                }
+                
+                // Aktualizace obsahu
+                const content = document.querySelector('.info-bubble-content');
+                if (content) {
+                    content.className = `info-bubble-content text-size-${size}`;
+                }
+                
+                console.log(`Velikost textu změněna na: ${size}`);
+            }
+
+            // ProgressRail komponenta
+            createProgressRail(steps, currentId, solvedByStep) {
+                const railHtml = steps.map(step => {
+                    let stepClass = 'progress-step pending';
+                    let stepContent = step.order || '?';
+                    
+                    if (solvedByStep.has(step.id)) {
+                        stepClass = solvedByStep.get(step.id) ? 'progress-step completed' : 'progress-step failed';
+                        stepContent = solvedByStep.get(step.id) ? '✓' : '✗';
+                    } else if (step.id === currentId) {
+                        stepClass = 'progress-step current';
+                    }
+                    
+                    return `<div class="${stepClass}" title="${step.title || step.id}">${stepContent}</div>`;
+                }).join('');
+                
+                return `<div class="progress-rail">${railHtml}</div>`;
+            }
+
+            // BackgroundCarousel komponenta
+            createBackgroundCarousel(images) {
+                console.log('🖼️ Vytváření BackgroundCarousel:', { images });
+                
+                if (!images || images.length === 0) {
+                    console.log('⚠️ Žádné obrázky pro carousel');
+                    return '<div class="background-carousel"></div>';
+                }
+                
+                const slidesHtml = images.map((img, index) => {
+                    console.log(`📸 Slide ${index}: ${img}`);
+                    return `<div class="background-slide ${index === 0 ? 'active' : ''}" 
+                                 style="background-image: url('${img}'); background-size: cover; background-position: center;"
+                                 data-image-url="${img}"></div>`;
+                }).join('');
+                
+                return `<div class="background-carousel">${slidesHtml}</div>`;
+            }
+
+            // Scene komponenta s vlastním obsahem
+            createSceneWithCustomContent(page, progressRailHtml, backgroundCarouselHtml, customContentHtml) {
+                return `
+                    <div class="scene-container">
+                        ${backgroundCarouselHtml}
+                        <div class="scene-overlay"></div>
+                        <div class="scene-content">
+                            <div class="p-4">
+                                ${progressRailHtml}
+                            </div>
+                            <div class="flex-1 flex items-center justify-center p-8">
+                                ${customContentHtml}
+                            </div>
+                            
+                            <div class="p-4 flex justify-between items-center bg-black bg-opacity-20">
+                                <div class="text-white text-sm">
+                                    Úniková hra Engine v${this.getEngineVersion()}
+                                </div>
+                                <div id="game-timer" class="text-white text-lg font-mono bg-black bg-opacity-50 px-3 py-1 rounded">
+                                    ${Math.floor(this.state.timeLeft / 60)}:${(this.state.timeLeft % 60).toString().padStart(2, '0')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Scene komponenta - pouze pro fallback
+            createScene(page, progressRailHtml, backgroundCarouselHtml) {
+                return `
+                    <div class="scene-container">
+                        ${backgroundCarouselHtml}
+                        <div class="scene-overlay"></div>
+                        <div class="scene-content">
+                            <div class="p-4">
+                                ${progressRailHtml}
+                            </div>
+                            <div class="flex-1 flex items-center justify-center p-8">
+                                <div class="info-bubble max-w-2xl w-full">
+                                    <h2 class="text-2xl font-bold mb-4 text-gray-800">${page.title || 'Stránka ' + page.id}</h2>
+                                    <p class="text-gray-700 mb-4">${page.description || 'Popis stránky'}</p>
+                                    
+                                    <div class="ui-actions">
+                                        <button onclick="game.handleContinue('${page.id}', this)" 
+                                                class="ui-btn primary">
+                                            ▶ Pokračovat
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="p-4 flex justify-between items-center bg-black bg-opacity-20">
+                                <div class="text-white text-sm">
+                                    Úniková hra Engine v${this.getEngineVersion()}
+                                </div>
+                                <div id="game-timer" class="text-white text-lg font-mono bg-black bg-opacity-50 px-3 py-1 rounded">
+                                    ${Math.floor(this.state.timeLeft / 60)}:${(this.state.timeLeft % 60).toString().padStart(2, '0')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+
+
+            // Samostatná puzzle bublina s obrázkem a lupou
+            createPuzzleBubble(page) {
+                const imageUrl = page.ui?.puzzle_img || page.ui?.scene_img || page.background_imgs?.[0] || page.background_img;
+                if (!imageUrl) return '';
+
+                const magnifierConfig = page.ui?.magnifier || { enabled: true, lensSize: 140, zoomLevel: 2, resultSize: 180 };
+                const puzzleBodyId = 'puzzle-body-' + Date.now();
+                const imageId = 'puzzle-img-' + Date.now();
+
+                return `
+                    <div class="info-bubble max-w-4xl w-full puzzle-bubble">
+                        <div class="flex justify-between items-center mb-3">
+                            <h2 class="text-2xl font-bold text-gray-800">${page.ui?.puzzle_title || page.title || 'Scéna'}</h2>
+                            <div class="flex gap-2">
+                                <button onclick="game.toggleMagnifier('${imageId}', ${JSON.stringify(magnifierConfig).replace(/"/g, '&quot;')})" 
+                                        class="ui-btn secondary text-sm">
+                                    🔍 Lupa
+                                </button>
+                                <button onclick="game.toggleSection('${puzzleBodyId}')" 
+                                        class="ui-btn secondary text-sm">
+                                    👁️ Obrázek
+                                </button>
+                            </div>
+                        </div>
+                        <div id="${puzzleBodyId}" class="puzzle-body">
+                            <div class="magnifier-container">
+                                <img id="${imageId}" 
+                                     src="${imageUrl}" 
+                                     class="zoomable-scene-image" 
+                                     alt="Puzzle obrázek">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Verze enginu
+            getEngineVersion() {
+                return "12.0 (A11y + QoL + Complete Escape Game Engine)";
+            }
+
+            // === GAMEPLAY LOOP SUMMARY ===
+            /*
+            Jak funguje úniková hra - kompletní gameplay loop:
+
+            1. NAČTENÍ SVĚTA:
+               - App stáhne JSON (meta, assets, pages) z URL
+               - Přednačte pozadí, připraví klávesnice a tvary podle assets
+               - Indexuje stránky pro rychlou navigaci
+
+            2. SCÉNA + PŘÍBĚH:
+               - Hráč vidí obrázek (případně karusel pozadí)
+               - V bublině je zadání, které si může zvětšit (Text Zoom - klávesa Z)
+               - Progress rail ukazuje pokrok hrou
+
+            3. HLEDÁNÍ INDICIÍ:
+               - Na scéně může jezdit LUPA (magnifier) – hledá detaily
+               - Najde čísla, tvary, barvy, šipky potřebné pro zámky
+
+            4. ZÁMEK:
+               - V dolním panelu se zobrazí příslušný typ zámku
+               - 7 typů: numeric, text, arrows, colors, shapes, cryptex, quiz
+               - Všechny mají sjednocené ovládání: velké sloty/vstup, kulatá klávesnice
+               - Klávesnice: Enter=Potvrdit, Backspace=mazat, 0-9 pro numeric
+               - U sekvencí vidí per-pozici "správně/špatně"
+
+            5. POSTUP:
+               - Po úspěchu onResolve(true) – app z JSON zjistí další krok
+               - Priorita: next_on_success → pořadí v pages → progress-rail
+               - Když chybí navigace, ukáže „Pokračovat →" (robustní flow)
+
+            6. ČAS:
+               - Timer běží (pokud meta.timer.enabled)
+               - Při warning_at vizuální varování
+               - Po vypršení skok na lose stránku
+
+            7. CÍL:
+               - Po sérii zámků dorazí na p-win (výhra)
+               - Konfety/efekty, statistiky, možnost hrát znovu
+               - Tím se uzavře příběh a děti mají odměnu
+
+            A11Y & QoL funkce:
+            - Klávesnice: Z=text zoom, Enter=submit, Backspace=delete
+            - ARIA: live regions, pressed states, labels
+            - Mobil: větší touch targety, optimalizace
+            - Reduced motion: vypnuté animace pro citlivé uživatele
+            - Screen reader: oznámení o odemčení zámků
+            */
+
+            // Odvození navigačních kroků z dat
+            deriveNavSteps(data) {
+                this.navSteps = data.pages.map(page => ({
+                    id: page.id,
+                    nextOnSuccess: page.next_on_success,
+                    nextOnFail: page.next_on_fail,
+                    index: this.pageIndex.get(page.id)?.index || 0
+                }));
+            }
+
+            // Najití následující stránky
+            nextFor(currentId, success = true) {
+                const pageInfo = this.pageIndex.get(currentId);
+                if (!pageInfo) return null;
+                
+                const page = pageInfo.page;
+                
+                if (success && page.next_on_success) {
+                    return page.next_on_success;
+                }
+                
+                if (!success && page.next_on_fail) {
+                    return page.next_on_fail;
+                }
+                
+                // Fallback na další stránku v pořadí
+                const nextIndex = pageInfo.index + 1;
+                if (nextIndex < this.normalizedData.pages.length) {
+                    return this.normalizedData.pages[nextIndex].id;
+                }
+                
+                return null;
+            }
+
+            // Bezpečný přechod na další stránku
+            safeNext(currentId, success = true) {
+                const nextId = this.nextFor(currentId, success);
+                if (nextId && this.pageIndex.has(nextId)) {
+                    return nextId;
+                }
+                return currentId; // Zůstaneme na aktuální stránce
+            }
+
+            // === DÁVKA 11: ROBUSTNÍ FLOW + NOUZOVĚ POKRAČOVAT ===
+
+            // Vylepšené vyřešení kroku/úkolu s robustním flow
+            onResolve(stepId, success = true) {
+                this.state.solvedByStep.set(stepId, success);
+                
+                const fromId = stepId || this.state.currentId;           // použij ten, který přišel
+                const nextId = this.safeNext(fromId, success);           // počítej z něj
+                
+                // Pokud je nextId stejné jako fromId, znamená to že nemáme kam jít
+                if (nextId === fromId && success) {
+                    // Zobrazíme nouzové tlačítko pro pokračování
+                    this.showEmergencyContinue(stepId);
+                } else {
+                    this.goto(nextId);
+                }
+                
+                console.log(`Krok ${stepId} vyřešen (${success ? 'úspěch' : 'neúspěch'}), přechod na ${nextId}`);
+            }
+
+            // Zobrazení nouzového tlačítka pro pokračování
+            showEmergencyContinue(stepId) {
+                const existingPanel = document.getElementById('emergency-continue-panel');
+                if (existingPanel) {
+                    existingPanel.remove();
+                }
+
+                const panel = document.createElement('div');
+                panel.id = 'emergency-continue-panel';
+                panel.className = 'fixed top-4 right-4 z-50 bg-green-500 text-white p-4 rounded-lg shadow-xl border-2 border-green-600';
+                panel.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="text-2xl">✅</div>
+                        <div>
+                            <div class="font-bold">Úkol splněn!</div>
+                            <div class="text-sm opacity-90">Krok ${stepId} byl úspěšně dokončen</div>
+                        </div>
+                        <button onclick="game.emergencyContinue()" 
+                                class="bg-white text-green-600 px-3 py-1 rounded font-semibold hover:bg-green-50 transition-colors">
+                            Pokračovat →
+                        </button>
+                    </div>
+                `;
+
+                document.body.appendChild(panel);
+
+                // Automatické skrytí po 10 sekundách
+                setTimeout(() => {
+                    if (panel.parentElement) {
+                        panel.remove();
+                    }
+                }, 10000);
+            }
+
+            // Nouzové pokračování na další stránku
+            emergencyContinue() {
+                const existingPanel = document.getElementById('emergency-continue-panel');
+                if (existingPanel) {
+                    existingPanel.remove();
+                }
+
+                // Pokus o přechod na další stránku v pořadí
+                const currentPageInfo = this.pageIndex.get(this.state.currentId);
+                if (currentPageInfo) {
+                    const nextIndex = currentPageInfo.index + 1;
+                    if (nextIndex < this.normalizedData.pages.length) {
+                        const nextPageId = this.normalizedData.pages[nextIndex].id;
+                        this.goto(nextPageId);
+                        console.log(`Nouzový přechod na stránku: ${nextPageId}`);
+                        return;
+                    }
+                }
+
+                // Pokud jsme na konci, zobrazíme zprávu o dokončení
+                this.showGameComplete();
+            }
+
+            // Obsluha tlačítka pokračovat s debounce
+            handleContinue(stepId, btn) {
+                if (btn) btn.disabled = true;
+                this.onResolve(stepId, true);
+            }
+
+            // Zobrazení zprávy o dokončení hry
+            showGameComplete() {
+                this.root.innerHTML = `
+                    <div class="text-center max-w-2xl">
+                        <div class="text-6xl mb-6">🎉</div>
+                        <h1 class="text-4xl font-bold text-white mb-4">Gratulujeme!</h1>
+                        <p class="text-xl text-white mb-8">Úspěšně jste dokončili únikovou hru!</p>
+                        
+                        <div class="info-bubble">
+                            <h2 class="text-2xl font-bold mb-4">Statistiky hry</h2>
+                            <div class="grid grid-cols-2 gap-4 text-center">
+                                <div>
+                                    <div class="text-3xl font-bold text-green-600">${this.countSolvedSteps()}</div>
+                                    <div class="text-sm text-gray-600">Vyřešených kroků</div>
+                                </div>
+                                <div>
+                                    <div class="text-3xl font-bold text-blue-600">${this.normalizedData.pages.length}</div>
+                                    <div class="text-sm text-gray-600">Celkem kroků</div>
+                                </div>
+                            </div>
+                            
+                            <div class="ui-actions mt-6">
+                                <button onclick="location.reload()" class="ui-btn primary">
+                                    🔄 Hrát znovu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Počítání vyřešených kroků
+            countSolvedSteps() {
+                let count = 0;
+                for (const [stepId, solved] of this.state.solvedByStep) {
+                    if (solved) count++;
+                }
+                return count;
+            }
+
+            // Sestavení lineárního pořadí stránek od skutečného startu
+            buildLinearOrder(startId) {
+                const seen = new Set();
+                const ordered = [];
+                let id = startId;
+
+                // jdi po next_on_success, když není, po pořadí v pages
+                while (id && !seen.has(id) && this.pageIndex.has(id)) {
+                    ordered.push(id);
+                    seen.add(id);
+                    const info = this.pageIndex.get(id);
+                    const page = info.page;
+                    id = page.next_on_success
+                        || this.normalizedData.pages[info.index + 1]?.id
+                        || null;
+                }
+
+                // doplň zbylé stránky (kdyby ve flow nebyly)
+                for (const p of this.normalizedData.pages) {
+                    if (!seen.has(p.id)) ordered.push(p.id);
+                }
+                return ordered;
+            }
+
+            // Vylepšené bezpečné hledání další stránky
+            safeNext(currentId, success = true) {
+                const pageInfo = this.pageIndex.get(currentId);
+                if (!pageInfo) return currentId;
+                
+                const page = pageInfo.page;
+                
+                // Priorita 1: next_on_success/fail pokud existuje a je platné
+                if (success && page.next_on_success) {
+                    if (this.pageIndex.has(page.next_on_success)) {
+                        return page.next_on_success;
+                    }
+                    console.warn(`next_on_success "${page.next_on_success}" neexistuje, pokračuji v pořadí`);
+                }
+                
+                if (!success && page.next_on_fail) {
+                    if (this.pageIndex.has(page.next_on_fail)) {
+                        return page.next_on_fail;
+                    }
+                    console.warn(`next_on_fail "${page.next_on_fail}" neexistuje, pokračuji v pořadí`);
+                }
+                
+                // Priorita 2: Další stránka v pořadí pages
+                const nextIndex = pageInfo.index + 1;
+                if (nextIndex < this.normalizedData.pages.length) {
+                    return this.normalizedData.pages[nextIndex].id;
+                }
+                
+                // Priorita 3: Progress rail - hledáme první nevyřešený krok
+                for (const page of this.normalizedData.pages) {
+                    if (!this.state.solvedByStep.has(page.id) || !this.state.solvedByStep.get(page.id)) {
+                        return page.id;
+                    }
+                }
+                
+                // Pokud je vše vyřešeno, zůstaneme na aktuální stránce
+                return currentId;
+            }
+
+            // Přechod na konkrétní stránku
+            goto(pageId) {
+                if (!this.pageIndex.has(pageId)) {
+                    console.warn(`Stránka ${pageId} neexistuje`);
+                    return;
+                }
+                
+                this.state.currentId = pageId;
+                this.renderCurrentPage();
+            }
+
+            // Inicializace a spuštění timeru
+            useGameTimer(timerCfg, loseId, gotoCallback) {
+                if (!timerCfg || !timerCfg.duration_seconds) return;
+                
+                this.state.timeLeft = timerCfg.duration_seconds;
+                this.state.isRunning = true;
+                
+                this.timerInterval = setInterval(() => {
+                    this.state.timeLeft--;
+                    this.updateTimerDisplay();
+                    
+                    if (this.state.timeLeft <= 0) {
+                        this.stopTimer();
+                        gotoCallback(loseId);
+                    }
+                }, 1000);
+                
+                this.updateTimerDisplay();
+            }
+
+            // Zastavení timeru
+            stopTimer() {
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+                this.state.isRunning = false;
+            }
+
+            // Aktualizace zobrazení timeru
+            updateTimerDisplay() {
+                const timerElement = document.getElementById('game-timer');
+                if (timerElement) {
+                    const minutes = Math.floor(this.state.timeLeft / 60);
+                    const seconds = this.state.timeLeft % 60;
+                    timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    
+                    // Vizuální upozornění při nízkém čase
+                    if (this.state.timeLeft <= 30) {
+                        timerElement.className = timerElement.className.replace('text-white', 'text-red-400 animate-pulse');
+                    }
+                }
+            }
+
+            // Vykreslení aktuální stránky podle JSON dat
+            renderCurrentPage() {
+                const pageInfo = this.pageIndex.get(this.state.currentId);
+                if (!pageInfo) return;
+                
+                const page = pageInfo.page;
+                
+                // jen hratelné (lock, magnifier, quiz, cryptex, …) – bez story/lose
+                const playable = this.normalizedData.pages.filter(p => p.type !== 'story' && p.type !== 'lose');
+                const progressSteps = playable.map((p, i) => ({ 
+                    id: p.id, 
+                    title: p.title, 
+                    order: i + 1 
+                }));
+                
+                // Vytvoření komponent
+                const progressRailHtml = this.createProgressRail(progressSteps, this.state.currentId, this.state.solvedByStep);
+                const backgroundCarouselHtml = this.createBackgroundCarousel(page.background_imgs);
+                
+                console.log('Renderuji stránku:', { 
+                    pageId: page.id, 
+                    type: page.type, 
+                    background_imgs: page.background_imgs,
+                    background_img: page.background_img,
+                    lock: page.lock
+                });
+                
+                // Rozhodnutí o typu obsahu podle page.type z JSON
+                let contentHtml;
+                
+                if (page.type === 'story') {
+                    // InfoBubble pro story stránky s prázdným pozadím
+                    const emptyBackground = this.createBackgroundCarousel([]); // žádný carousel
+                    const infoBubbleHtml = this.createInfoBubble(
+                        { title: page.title, description: page.description },
+                        `game.handleContinue('${page.id}', this)`,
+                        page.ui || {}
+                    );
+                    contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, emptyBackground, infoBubbleHtml);
+                    this.root.innerHTML = contentHtml;
+                    return; // důležité – ať to dál nepřepisuješ
+                    
+                } else if (page.type === 'magnifier') {
+                    // Magnifier scéna s zoomovatelným obrázkem
+                    const imageUrl = page.background_imgs?.[0] || page.background_img;
+                    console.log('Magnifier stránka:', { imageUrl, page });
+                    
+                    // VYNUTIT prázdný background za scénou, ať je hádanka jen v bublině
+                    const emptyBackground = this.createBackgroundCarousel([]);
+                    
+                    if (imageUrl) {
+                        const magnifierConfig = page.ui?.magnifier || { enabled: true };
+                        const zoomableImageHtml = this.createZoomableSceneImage(imageUrl, magnifierConfig);
+                        
+                        const magnifierContentHtml = `
+                            <div class="info-bubble max-w-2xl w-full">
+                                <h2 class="text-2xl font-bold mb-4 text-gray-800">${page.title || '🔍 Hledání indicií'}</h2>
+                                <p class="text-gray-700 mb-4">${page.description || 'Pohybujte myší po obrázku pro zvětšení detailů'}</p>
+                                <div class="mb-4">
+                                    ${zoomableImageHtml}
+                                </div>
+                                <div class="ui-actions">
+                                    <button onclick="game.handleContinue('${page.id}', this)" class="ui-btn primary">
+                                        ▶ Pokračovat
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, emptyBackground, magnifierContentHtml);
+                    } else {
+                        // Fallback pokud není obrázek
+                        contentHtml = this.createScene(page, progressRailHtml, emptyBackground);
+                    }
+                    
+                } else if (page.type === 'lock' && page.lock) {
+                    // žádné celoobrazové pozadí – puzzle je v bublině
+                    const emptyBackground = this.createBackgroundCarousel([]);
+
+                    const puzzleHtml = this.createPuzzleBubble(page); // obrázek/hádanka
+                    const lockHtml   = this.createLockRouter(page.lock); // zámek
+
+                    const stacked = `
+                        <div class="content-stack">
+                            ${puzzleHtml}
+                            <div>${lockHtml}</div>
+                        </div>
+                    `;
+
+                    contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, emptyBackground, stacked);
+                    
+                } else if (page.type === 'win') {
+                    // Výherní stránka
+                    const winContentHtml = `
+                        <div class="info-bubble max-w-2xl w-full text-center">
+                            <div class="text-6xl mb-6">🎉</div>
+                            <h1 class="text-4xl font-bold text-green-600 mb-4">${page.title || 'Gratulujeme!'}</h1>
+                            <p class="text-xl text-gray-700 mb-8">${page.description || 'Úspěšně jste dokončili únikovou hru!'}</p>
+                            
+                            <div class="grid grid-cols-2 gap-4 text-center mb-6">
+                                <div>
+                                    <div class="text-3xl font-bold text-green-600">${this.countSolvedSteps()}</div>
+                                    <div class="text-sm text-gray-600">Vyřešených kroků</div>
+                                </div>
+                                <div>
+                                    <div class="text-3xl font-bold text-blue-600">${Math.floor(this.state.timeLeft / 60)}:${(this.state.timeLeft % 60).toString().padStart(2, '0')}</div>
+                                    <div class="text-sm text-gray-600">Zbývající čas</div>
+                                </div>
+                            </div>
+                            
+                            <div class="ui-actions">
+                                <button onclick="location.reload()" class="ui-btn primary">
+                                    🔄 Hrát znovu
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, backgroundCarouselHtml, winContentHtml);
+                    
+                } else if (page.type === 'lose') {
+                    // Proherní stránka
+                    const loseContentHtml = `
+                        <div class="info-bubble max-w-2xl w-full text-center">
+                            <div class="text-6xl mb-6">⏰</div>
+                            <h1 class="text-4xl font-bold text-red-600 mb-4">${page.title || 'Čas vypršel!'}</h1>
+                            <p class="text-xl text-gray-700 mb-8">${page.description || 'Bohužel se vám nepodařilo dokončit hru včas.'}</p>
+                            
+                            <div class="ui-actions">
+                                <button onclick="location.reload()" class="ui-btn primary">
+                                    🔄 Zkusit znovu
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, backgroundCarouselHtml, loseContentHtml);
+                    
+                } else {
+                    // Standardní Scene pro neznámé typy
+                    contentHtml = this.createScene(page, progressRailHtml, backgroundCarouselHtml);
+                }
+                
+                this.root.innerHTML = contentHtml;
+                
+                // Spuštění carousel animace pokud má více obrázků
+                if (page.background_imgs && page.background_imgs.length > 1) {
+                    this.startBackgroundCarousel(page.background_imgs.length);
+                }
+            }
+
+            // Spuštění carousel animace
+            startBackgroundCarousel(imageCount) {
+                if (this.carouselInterval) {
+                    clearInterval(this.carouselInterval);
+                }
+                
+                let currentSlide = 0;
+                this.carouselInterval = setInterval(() => {
+                    const slides = document.querySelectorAll('.background-slide');
+                    if (slides.length <= 1) return;
+                    
+                    slides[currentSlide].classList.remove('active');
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    slides[currentSlide].classList.add('active');
+                }, 5000); // Změna každých 5 sekund
+            }
+
+            // UI pro loading stav
+            showLoading(message) {
+                this.root.innerHTML = `
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
+                        <p class="text-white text-lg">${message}</p>
+                    </div>
+                `;
+            }
+
+            // UI pro chybový stav
+            showError(message) {
+                this.root.innerHTML = `
+                    <div class="text-center max-w-md">
+                        <div class="text-red-400 text-6xl mb-4">⚠️</div>
+                        <h2 class="text-white text-xl font-semibold mb-2">Chyba</h2>
+                        <p class="text-red-200 mb-4">${message}</p>
+                        <button onclick="location.reload()" 
+                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-medium">
+                            Zkusit znovu
+                        </button>
+                    </div>
+                `;
+            }
+
+            // Hlavní inicializační metoda
+            async initialize(gameUrl) {
+                try {
+                    // Vyčištění stavu z minulé session
+                    this.state.solvedByStep = new Map();
+                    
+                    // Dávka 1: Načtení a příprava dat
+                    const gameData = await this.fetchGame(gameUrl);
+                    const normalizedData = this.normalizeGame(gameData);
+                    this.indexPages(normalizedData);
+                    await this.preloadImages(normalizedData);
+                    
+                    // Dávka 2: Příprava navigace a timeru
+                    this.deriveNavSteps(normalizedData);
+                    
+                    // Start na intro stránce nebo meta.start_page
+                    const startId = normalizedData.meta?.start_page || "p-intro-1";
+                    this.state.currentId = this.pageIndex.has(startId)
+                        ? startId
+                        : normalizedData.pages[0]?.id;
+                    
+                    // Timer jen pokud enabled a máme duration
+                    const t = normalizedData.meta.timer;
+                    if (t && t.enabled && t.duration_seconds > 0) {
+                        this.useGameTimer(t, t.lose_page, (loseId) => this.goto(loseId));
+                    }
+                    
+                    this.renderCurrentPage();
+                    console.log('Hra úspěšně inicializována!');
+                    
+                } catch (error) {
+                    console.error('Chyba při inicializaci:', error);
+                }
+            }
+        }
+
+        // Globální instance hry
+        const game = new EscapeGameEngine();
+
+        // Spuštění hry po načtení stránky
+        document.addEventListener('DOMContentLoaded', () => {
+            const gameUrl = 'https://raw.githubusercontent.com/vanekpa/canvaveskole/refs/heads/main/game1.json';
+            game.initialize(gameUrl);
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99111a97b474bb9c',t:'MTc2MDg4NTU5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
