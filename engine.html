@@ -19,10 +19,19 @@
     </script>
     <style>
         html, body {
-            height: auto;
+            height: 100%;
             min-height: 100vh;
             box-sizing: border-box;
             font-family: 'Fredoka', sans-serif;
+        }
+
+        .game-root {
+            min-height: 100vh;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 16px;
+            overflow: hidden;
         }
 
         /* === DÁVKA 3: DESIGN SYSTÉM === */
@@ -118,7 +127,7 @@
         .progress-step {
             min-width: 40px;
             height: 40px;
-            border-radius: 50%;
+            border-radius: 999px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -126,6 +135,41 @@
             font-size: 0.875rem;
             transition: all 0.3s ease;
             position: relative;
+            flex: 0 0 auto;
+            padding: 0 12px;
+            background: rgba(255, 255, 255, 0.35);
+            color: var(--neutral-800);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+        }
+
+        .progress-step::after {
+            content: attr(data-label);
+            font-size: 0.75rem;
+            font-weight: 500;
+            position: absolute;
+            bottom: -1.6rem;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .progress-step.progress-step--story {
+            background: rgba(255, 255, 255, 0.35);
+            color: var(--neutral-800);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .progress-step.progress-step--win {
+            background: rgba(34, 197, 94, 0.35);
+            color: var(--success-700);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .progress-step.progress-step--lose {
+            background: rgba(248, 113, 113, 0.35);
+            color: var(--danger-600);
+            border: 1px solid rgba(248, 113, 113, 0.4);
         }
 
         .progress-step.completed {
@@ -142,8 +186,7 @@
         }
 
         .progress-step.pending {
-            background: var(--neutral-300);
-            color: var(--neutral-600);
+            opacity: 0.9;
         }
 
         .progress-step.failed {
@@ -312,9 +355,11 @@
         .scene-container {
             position: relative;
             width: 100%;
-            height: auto;
-            overflow: visible;
+            flex: 1;
+            min-height: 0;
             border-radius: var(--border-radius);
+            display: flex;
+            overflow: hidden;
         }
 
         .scene-overlay {
@@ -330,9 +375,33 @@
         .scene-content {
             position: relative;
             z-index: 2;
-            height: auto;
+            width: 100%;
+            display: grid;
+            grid-template-rows: auto minmax(0, 1fr) auto;
+            min-height: 100%;
+        }
+
+        .scene-header {
+            padding: clamp(12px, 2vw, 24px);
+        }
+
+        .scene-main {
+            padding: clamp(18px, 3vw, 36px);
+            display: flex;
+            justify-content: center;
+            align-items: stretch;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .scene-main-inner {
+            flex: 1 1 auto;
+            max-width: min(1160px, 100%);
             display: flex;
             flex-direction: column;
+            gap: clamp(16px, 2vw, 28px);
+            min-height: 0;
+            overflow: hidden;
         }
 
         /* Background carousel */
@@ -825,34 +894,53 @@
             overflow: hidden;
         }
 
-        /* layout „obrázek nad zámkem" – ale ať je vše vždy vidět */
-        .content-stack { 
+        /* layout „obrázek nad zámkem" – dynamická mřížka */
+        .content-stack {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 14px; 
+            grid-template-rows: minmax(0, 1fr) auto;
+            gap: clamp(16px, 2vw, 24px);
+            min-height: 0;
         }
-        
+
+        .content-stack > * {
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(12px, 1.5vw, 18px);
+            overflow: hidden;
+        }
+
         @media (min-width: 1024px) {
             .content-stack {
-                grid-template-columns: 1fr 520px;
-                align-items: start;
-            }
-            /* aby se zámek "držel" na očích při scrollu */
-            .lock-container { 
-                position: sticky; 
-                top: 88px; 
+                grid-template-columns: minmax(0, 1fr) minmax(320px, 520px);
+                grid-template-rows: minmax(0, 1fr);
+                align-items: stretch;
             }
         }
 
-        /* puzzle bublina: obrázek nikdy nepřesáhne X% výšky okna */
-        .puzzle-bubble .zoomable-scene-image { 
-            max-height: 45vh; 
+        /* puzzle bublina: obrázek vyplní dostupnou výšku */
+        .puzzle-bubble {
+            height: 100%;
+            overflow: hidden;
         }
-        
-        @media (max-width: 768px) {
-            .puzzle-bubble .zoomable-scene-image { 
-                max-height: 35vh; 
-            }
+
+        .puzzle-bubble .puzzle-body {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .puzzle-bubble .magnifier-container {
+            position: relative;
+            height: 100%;
+        }
+
+        .puzzle-bubble .zoomable-scene-image {
+            width: 100%;
+            height: 100%;
+            max-height: none;
+            object-fit: contain;
         }
 
         /* rozbalovací sekce obrázku */
@@ -873,10 +961,20 @@
         }
 
         /* ať je zámek viditelný i když je obsah dlouhý */
-        .lock-container { 
-            max-width: 740px; 
-            margin-left: auto; 
-            margin-right: auto; 
+        .lock-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 740px;
+            margin-left: auto;
+            margin-right: auto;
+            flex: 1;
+            min-height: 0;
+            overflow: auto;
+        }
+
+        .lock-container .soft-keyboard,
+        .lock-container .ui-actions {
+            margin-top: auto;
         }
 
         /* šipky v jedné řadě */
@@ -1249,7 +1347,7 @@
     </style>
 </head>
 <body class="h-full game-background font-fredoka">
-    <div id="root" style="display: block; padding: 20px 16px; min-height: 100vh; overflow-y: auto;">
+    <div id="root" class="game-root">
         <!-- Loading UI bude zde -->
     </div>
     
@@ -1277,6 +1375,7 @@
                     solvedByStep: new Map(),
                     timeLeft: 0,
                     isRunning: false,
+                    gameEnded: null, // 'win' | 'lose' | null
                     textSize: 'medium' // Dávka 5: Text zoom
                 };
                 
@@ -1616,6 +1715,46 @@
                     setTimeout(() => {
                         this.liveRegion.textContent = '';
                     }, 1000);
+                }
+            }
+
+            // Generování labelu pro progress rail
+            progressLabelFor(page, index) {
+                if (page?.ui?.progress_label) {
+                    return page.ui.progress_label;
+                }
+
+                switch (page?.type) {
+                    case 'story':
+                        return index === 0 ? 'Start' : `Příběh ${index + 1}`;
+                    case 'magnifier':
+                        return 'Scéna';
+                    case 'lock':
+                        return 'Zámek';
+                    case 'quiz':
+                        return 'Kvíz';
+                    case 'cryptex':
+                        return 'Cryptex';
+                    case 'win':
+                        return 'Výhra';
+                    case 'lose':
+                        return 'Prohra';
+                    default:
+                        return `Krok ${index + 1}`;
+                }
+            }
+
+            // Generování ikony pro progress rail
+            progressIconFor(type, fallback) {
+                switch (type) {
+                    case 'story':
+                        return 'ⓘ';
+                    case 'win':
+                        return '🏁';
+                    case 'lose':
+                        return '⏰';
+                    default:
+                        return fallback;
                 }
             }
 
@@ -3260,19 +3399,27 @@
             // ProgressRail komponenta
             createProgressRail(steps, currentId, solvedByStep) {
                 const railHtml = steps.map(step => {
-                    let stepClass = 'progress-step pending';
-                    let stepContent = step.order || '?';
-                    
+                    const baseClass = ['progress-step', `progress-step--${step.type || 'default'}`];
+                    let statusClass = 'pending';
+                    let stepContent = this.progressIconFor(step.type, String(step.order || '•'));
+
                     if (solvedByStep.has(step.id)) {
-                        stepClass = solvedByStep.get(step.id) ? 'progress-step completed' : 'progress-step failed';
-                        stepContent = solvedByStep.get(step.id) ? '✓' : '✗';
+                        const solved = solvedByStep.get(step.id);
+                        statusClass = solved ? 'completed' : 'failed';
+                        stepContent = solved ? '✓' : '✗';
                     } else if (step.id === currentId) {
-                        stepClass = 'progress-step current';
+                        statusClass = 'current';
+                        stepContent = this.progressIconFor(step.type, String(step.order || '•'));
                     }
-                    
-                    return `<div class="${stepClass}" title="${step.title || step.id}">${stepContent}</div>`;
+
+                    baseClass.push(statusClass);
+
+                    const label = this.escapeAttr(step.label || step.title || '');
+                    const title = this.escapeAttr(step.title || step.label || step.id);
+
+                    return `<div class="${baseClass.join(' ')}" data-label="${label}" title="${title}">${stepContent}</div>`;
                 }).join('');
-                
+
                 return `<div class="progress-rail">${railHtml}</div>`;
             }
 
@@ -3302,11 +3449,13 @@
                         ${backgroundCarouselHtml}
                         <div class="scene-overlay"></div>
                         <div class="scene-content">
-                            <div class="p-4">
+                            <div class="scene-header">
                                 ${progressRailHtml}
                             </div>
-                            <div class="flex-1 flex items-center justify-center p-8">
-                                ${customContentHtml}
+                            <div class="scene-main">
+                                <div class="scene-main-inner">
+                                    ${customContentHtml}
+                                </div>
                             </div>
                             
                             <div class="p-4 flex justify-between items-center bg-black bg-opacity-20">
@@ -3324,39 +3473,21 @@
 
             // Scene komponenta - pouze pro fallback
             createScene(page, progressRailHtml, backgroundCarouselHtml) {
-                return `
-                    <div class="scene-container">
-                        ${backgroundCarouselHtml}
-                        <div class="scene-overlay"></div>
-                        <div class="scene-content">
-                            <div class="p-4">
-                                ${progressRailHtml}
-                            </div>
-                            <div class="flex-1 flex items-center justify-center p-8">
-                                <div class="info-bubble max-w-2xl w-full">
-                                    <h2 class="text-2xl font-bold mb-4 text-gray-800">${page.title || 'Stránka ' + page.id}</h2>
-                                    <p class="text-gray-700 mb-4">${page.description || 'Popis stránky'}</p>
-                                    
-                                    <div class="ui-actions">
-                                        <button onclick="game.handleContinue('${page.id}', this)" 
-                                                class="ui-btn primary">
-                                            ▶ Pokračovat
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="p-4 flex justify-between items-center bg-black bg-opacity-20">
-                                <div class="text-white text-sm">
-                                    Úniková hra Engine v${this.getEngineVersion()}
-                                </div>
-                                <div id="game-timer" class="text-white text-lg font-mono bg-black bg-opacity-50 px-3 py-1 rounded">
-                                    ${Math.floor(this.state.timeLeft / 60)}:${(this.state.timeLeft % 60).toString().padStart(2, '0')}
-                                </div>
-                            </div>
+                const fallbackContent = `
+                    <div class="info-bubble max-w-2xl w-full">
+                        <h2 class="text-2xl font-bold mb-4 text-gray-800">${page.title || 'Stránka ' + page.id}</h2>
+                        <p class="text-gray-700 mb-4">${page.description || 'Popis stránky'}</p>
+                        
+                        <div class="ui-actions">
+                            <button onclick="game.handleContinue('${page.id}', this)" 
+                                    class="ui-btn primary">
+                                ▶ Pokračovat
+                            </button>
                         </div>
                     </div>
                 `;
+                
+                return this.createSceneWithCustomContent(page, progressRailHtml, backgroundCarouselHtml, fallbackContent);
             }
 
 
@@ -3685,7 +3816,17 @@
                     console.warn(`Stránka ${pageId} neexistuje`);
                     return;
                 }
-                
+
+                const targetInfo = this.pageIndex.get(pageId);
+                const targetPage = targetInfo?.page;
+
+                if (targetPage && (targetPage.type === 'win' || targetPage.type === 'lose')) {
+                    this.state.gameEnded = targetPage.type;
+                    this.stopTimer();
+                } else {
+                    this.state.gameEnded = null;
+                }
+
                 this.state.currentId = pageId;
                 this.renderCurrentPage();
             }
@@ -3693,20 +3834,27 @@
             // Inicializace a spuštění timeru
             useGameTimer(timerCfg, loseId, gotoCallback) {
                 if (!timerCfg || !timerCfg.duration_seconds) return;
-                
+
                 this.state.timeLeft = timerCfg.duration_seconds;
                 this.state.isRunning = true;
-                
+
                 this.timerInterval = setInterval(() => {
-                    this.state.timeLeft--;
+                    if (this.state.gameEnded) {
+                        this.stopTimer();
+                        return;
+                    }
+
+                    this.state.timeLeft = Math.max(0, this.state.timeLeft - 1);
                     this.updateTimerDisplay();
-                    
+
                     if (this.state.timeLeft <= 0) {
                         this.stopTimer();
-                        gotoCallback(loseId);
+                        if (!this.state.gameEnded && loseId) {
+                            gotoCallback(loseId);
+                        }
                     }
                 }, 1000);
-                
+
                 this.updateTimerDisplay();
             }
 
@@ -3741,12 +3889,13 @@
                 
                 const page = pageInfo.page;
                 
-                // jen hratelné (lock, magnifier, quiz, cryptex, …) – bez story/lose
-                const playable = this.normalizedData.pages.filter(p => p.type !== 'story' && p.type !== 'lose');
-                const progressSteps = playable.map((p, i) => ({ 
-                    id: p.id, 
-                    title: p.title, 
-                    order: i + 1 
+                // Všechny stránky pro progress rail s kontextovými labely
+                const progressSteps = this.normalizedData.pages.map((p, index) => ({
+                    id: p.id,
+                    title: p.title,
+                    order: index + 1,
+                    type: p.type || 'default',
+                    label: this.progressLabelFor(p, index)
                 }));
                 
                 // Vytvoření komponent
@@ -3931,6 +4080,9 @@
                 try {
                     // Vyčištění stavu z minulé session
                     this.state.solvedByStep = new Map();
+                    this.state.gameEnded = null;
+                    this.state.timeLeft = 0;
+                    this.state.isRunning = false;
                     
                     // Dávka 1: Načtení a příprava dat
                     const gameData = await this.fetchGame(gameUrl);
@@ -3971,5 +4123,5 @@
             game.initialize(gameUrl);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9911a55d1197b377',t:'MTc2MDg5MTI3OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9911f38f6566bb9c',t:'MTc2MDg5NDQ4Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
