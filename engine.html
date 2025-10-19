@@ -111,7 +111,7 @@
             background: rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(5px);
             border-radius: var(--border-radius-lg);
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -143,15 +143,7 @@
         }
 
         .progress-step::after {
-            content: attr(data-label);
-            font-size: 0.75rem;
-            font-weight: 500;
-            position: absolute;
-            bottom: -1.6rem;
-            left: 50%;
-            transform: translateX(-50%);
-            white-space: nowrap;
-            color: rgba(255, 255, 255, 0.9);
+            display: none;
         }
 
         .progress-step.progress-step--story {
@@ -530,8 +522,11 @@
             padding: 1.5rem;
             box-shadow: var(--shadow-xl);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            max-width: 500px;
+            width: min(100%, 560px);
             margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: clamp(12px, 1.5vw, 20px);
         }
 
         /* Numeric Lock Slots */
@@ -659,38 +654,40 @@
 
         /* Soft Keyboards */
         .soft-keyboard {
-            margin: 1rem 0;
-            padding: 1rem;
-            background: rgba(0, 0, 0, 0.05);
+            margin: clamp(12px, 2vw, 20px) auto 0;
+            padding: clamp(12px, 2vw, 20px);
+            background: rgba(255, 255, 255, 0.9);
             border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-md);
+            display: grid;
+            gap: clamp(8px, 1.5vw, 12px);
+            width: min(100%, 520px);
         }
 
         .keyboard-row {
             display: flex;
-            gap: 0.5rem;
+            gap: clamp(8px, 1.5vw, 12px);
             justify-content: center;
-            margin-bottom: 0.5rem;
+            margin: 0;
+            width: 100%;
         }
 
         .keyboard-row:last-child {
-            margin-bottom: 0;
+            margin: 0;
         }
 
         .keyboard-grid {
             display: grid;
-            gap: 0.5rem;
+            gap: clamp(8px, 1.5vw, 12px);
             justify-content: center;
-            margin-bottom: 0.5rem;
+            margin: 0;
+            width: 100%;
+            grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
         }
 
-        .color-keyboard .keyboard-grid {
-            grid-template-columns: repeat(4, 1fr);
-            max-width: 200px;
-        }
-
+        .color-keyboard .keyboard-grid,
         .shape-keyboard .keyboard-grid {
-            grid-template-columns: repeat(3, 1fr);
-            max-width: 180px;
+            justify-items: center;
         }
 
         .keyboard-key {
@@ -707,6 +704,7 @@
             align-items: center;
             justify-content: center;
             color: var(--neutral-700);
+            width: 100%;
         }
 
         .keyboard-key:hover {
@@ -733,6 +731,60 @@
         /* Arrow Keys */
         .arrow-key {
             font-size: 1.5rem;
+        }
+
+        .numeric-keyboard {
+            grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+            justify-items: stretch;
+            grid-auto-flow: dense;
+        }
+
+        .numeric-keyboard .keyboard-row {
+            display: contents;
+        }
+
+        .numeric-keyboard .keyboard-row:nth-child(-n + 3) .keyboard-key {
+            aspect-ratio: 1 / 1;
+        }
+
+        .numeric-keyboard .keyboard-row:last-child .keyboard-key:first-child {
+            grid-column: span 2;
+        }
+
+        .numeric-keyboard .keyboard-row:last-child .keyboard-key {
+            aspect-ratio: auto;
+        }
+
+        .arrow-keyboard {
+            grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+            justify-items: stretch;
+            grid-auto-flow: dense;
+        }
+
+        .arrow-keyboard .keyboard-row {
+            display: contents;
+        }
+
+        .arrow-keyboard .keyboard-key {
+            aspect-ratio: 1 / 1;
+        }
+
+        .color-keyboard,
+        .shape-keyboard {
+            grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+            justify-items: stretch;
+            grid-auto-flow: dense;
+        }
+
+        .color-keyboard .keyboard-grid,
+        .shape-keyboard .keyboard-grid {
+            grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+            width: 100%;
+        }
+
+        .color-keyboard .keyboard-grid .keyboard-key,
+        .shape-keyboard .keyboard-grid .keyboard-key {
+            aspect-ratio: 1 / 1;
         }
 
         /* Color Keys */
@@ -1502,12 +1554,18 @@
                         const nextSuccess = sanitizeId(p.next_on_success);
                         const nextFail = sanitizeId(p.next_on_fail);
                         
-                        // Pozadí jen pro magnifier a lock stránky z ui.background_imgs
-                        // Pro story/info stránky použij p.background_imgs nebo prázdné
-                        const wantsUiBg = (type === 'magnifier' || type === 'lock');
-                        const uiImgs = wantsUiBg
-                            ? (p.ui?.background_imgs || (p.ui?.background_img ? [p.ui.background_img] : []))
-                            : (p.background_imgs || (p.background_img ? [p.background_img] : []));
+                        // Normalizace pozadí podle typu stránky
+                        const backgroundFromData = p.background_imgs || (p.background_img ? [p.background_img] : []);
+                        const backgroundFromUi = p.ui?.background_imgs || (p.ui?.background_img ? [p.ui.background_img] : []);
+
+                        let background_imgs;
+                        if (type === 'magnifier' || type === 'lock') {
+                            background_imgs = backgroundFromUi.length ? backgroundFromUi : backgroundFromData;
+                        } else if (type === 'story') {
+                            background_imgs = backgroundFromData.length ? backgroundFromData : backgroundFromUi;
+                        } else {
+                            background_imgs = backgroundFromData.length ? backgroundFromData : backgroundFromUi;
+                        }
                         
                         const title = p.info?.title || p.title || '';
                         const description = p.info?.text || p.info?.story || p.description || '';
@@ -1518,7 +1576,7 @@
                             type,
                             title,
                             description,
-                            background_imgs: uiImgs,
+                            background_imgs,
                             next_on_success: nextSuccess,
                             next_on_fail: nextFail,
                             // transformace zámku do engine formátu
@@ -3889,14 +3947,27 @@
                 
                 const page = pageInfo.page;
                 
-                // Všechny stránky pro progress rail s kontextovými labely
-                const progressSteps = this.normalizedData.pages.map((p, index) => ({
-                    id: p.id,
-                    title: p.title,
-                    order: index + 1,
-                    type: p.type || 'default',
-                    label: this.progressLabelFor(p, index)
-                }));
+                // Sestavení kroků v lineárním pořadí
+                const startForOrder = (this.state.startId && this.pageIndex.has(this.state.startId))
+                    ? this.state.startId
+                    : (this.normalizedData.pages[0]?.id || page.id);
+
+                const orderedIds = this.buildLinearOrder(startForOrder);
+                const progressSteps = orderedIds
+                    .map((id, index) => {
+                        const info = this.pageIndex.get(id);
+                        if (!info) return null;
+
+                        const stepPage = info.page;
+                        return {
+                            id,
+                            title: stepPage.title,
+                            order: index + 1,
+                            type: stepPage.type || 'default',
+                            label: this.progressLabelFor(stepPage, index)
+                        };
+                    })
+                    .filter(Boolean);
                 
                 // Vytvoření komponent
                 const progressRailHtml = this.createProgressRail(progressSteps, this.state.currentId, this.state.solvedByStep);
@@ -3914,16 +3985,14 @@
                 let contentHtml;
                 
                 if (page.type === 'story') {
-                    // InfoBubble pro story stránky s prázdným pozadím
-                    const emptyBackground = this.createBackgroundCarousel([]); // žádný carousel
+                    // InfoBubble pro story stránky s pozadím ze scény
+                    const storyBackground = backgroundCarouselHtml;
                     const infoBubbleHtml = this.createInfoBubble(
                         { title: page.title, description: page.description },
                         `game.handleContinue('${page.id}', this)`,
                         page.ui || {}
                     );
-                    contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, emptyBackground, infoBubbleHtml);
-                    this.root.innerHTML = contentHtml;
-                    return; // důležité – ať to dál nepřepisuješ
+                    contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, storyBackground, infoBubbleHtml);
                     
                 } else if (page.type === 'magnifier') {
                     // Magnifier scéna s zoomovatelným obrázkem
@@ -4095,6 +4164,10 @@
                     
                     // Start na intro stránce nebo meta.start_page
                     const startId = normalizedData.meta?.start_page || "p-intro-1";
+                    this.state.startId = this.pageIndex.has(startId)
+                        ? startId
+                        : (normalizedData.pages[0]?.id || null);
+
                     this.state.currentId = this.pageIndex.has(startId)
                         ? startId
                         : normalizedData.pages[0]?.id;
@@ -4123,5 +4196,5 @@
             game.initialize(gameUrl);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9911f38f6566bb9c',t:'MTc2MDg5NDQ4Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99121f2461f9b377',t:'MTc2MDg5NjI2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
