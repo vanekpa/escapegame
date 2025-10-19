@@ -397,7 +397,7 @@
 
         .magnifier-lens {
             position: absolute;
-            width: 140px; 
+            width: 140px;
             height: 140px;
             border: 3px solid rgba(255, 255, 255, 0.8);
             border-radius: 50%;
@@ -409,9 +409,9 @@
 
         .magnifier-result {
             position: absolute;
-            right: 12px; 
-            bottom: 12px; 
-            width: 180px; 
+            right: 12px;
+            bottom: 12px;
+            width: 180px;
             height: 180px;
             overflow: hidden;
             border-radius: 12px;
@@ -419,11 +419,23 @@
             border: 3px solid #fff;
             display: none;
             z-index: 20;
+            pointer-events: none;
         }
 
         .magnifier-result img {
             position: absolute;
             pointer-events: none;
+        }
+
+        @media (hover: none), (pointer: coarse) {
+            .magnifier-container {
+                cursor: default;
+            }
+
+            .magnifier-lens,
+            .magnifier-result {
+                display: none !important;
+            }
         }
 
         .zoomable-scene-image {
@@ -1299,6 +1311,14 @@
 
             // Normalizace dat - převod na konzistentní formát
             normalizeGame(data) {
+                const sanitizeId = (value) => {
+                    if (typeof value === 'string') {
+                        const trimmed = value.trim();
+                        return trimmed.length ? trimmed : null;
+                    }
+                    return value ?? null;
+                };
+
                 const mapLock = (lock, assets) => {
                     if (!lock) return null;
                     const mode = lock.mode;
@@ -1366,17 +1386,22 @@
                         duration_seconds: Number(data.meta.timer.seconds || 0),
                         warning_at: Number(data.meta.timer.warning_at || 0),
                         show: !!data.meta.timer.show,
-                        lose_page: data.meta.timer.lose_page || data.meta.timer.losePage || 'p-timeout'
+                        lose_page: sanitizeId(data.meta.timer.lose_page || data.meta.timer.losePage || 'p-timeout')
                     }
                     : null;
 
                 const normalized = {
                     meta: {
                         ...data.meta,
-                        timer
+                        timer,
+                        start_page: sanitizeId(data.meta?.start_page)
                     },
                     pages: data.pages.map(p => {
                         const type = p.type === 'info' ? 'story' : p.type;
+                        const rawId = p.id != null ? String(p.id) : '';
+                        const id = sanitizeId(rawId) || rawId;
+                        const nextSuccess = sanitizeId(p.next_on_success);
+                        const nextFail = sanitizeId(p.next_on_fail);
                         
                         // Pozadí jen pro magnifier a lock stránky z ui.background_imgs
                         // Pro story/info stránky použij p.background_imgs nebo prázdné
@@ -1390,12 +1415,13 @@
 
                         return {
                             ...p,
+                            id,
                             type,
                             title,
                             description,
                             background_imgs: uiImgs,
-                            next_on_success: p.next_on_success ?? null,
-                            next_on_fail: p.next_on_fail ?? null,
+                            next_on_success: nextSuccess,
+                            next_on_fail: nextFail,
                             // transformace zámku do engine formátu
                             lock: p.type === 'lock' ? mapLock(p.lock, data.assets || {}) : null
                         };
@@ -1612,6 +1638,10 @@
                     const img = document.getElementById(imageId);
                     if (!img) return false;
                     const inst = this.useMagnifier(img, config);
+                    if (!inst) {
+                        this.announceToScreenReader('Lupa není dostupná na tomto zařízení');
+                        return false;
+                    }
                     this.magnifiers.set(key, inst);
                     this.announceToScreenReader('Lupa zapnuta');
                     return true;
@@ -1627,6 +1657,26 @@
             // Magnifier funkce
             useMagnifier(imgElement, config = {}) {
                 const cfg = { lensSize: 140, zoomLevel: 2, resultSize: 180, ...config };
+                const matchMediaSupported = typeof window !== 'undefined' && typeof window.matchMedia === 'function';
+                const hasFinePointer = !matchMediaSupported || window.matchMedia('(pointer: fine)').matches;
+                const hasHover = !matchMediaSupported || window.matchMedia('(hover: hover)').matches;
+
+                if (!hasFinePointer || !hasHover) {
+                    return null;
+                }
+
+                const container = imgElement.closest('.magnifier-container') || imgElement.parentElement;
+                if (!container) {
+                    return null;
+                }
+
+                const requestFrame = (typeof window !== 'undefined' && typeof window.requestAnimationFrame === 'function')
+                    ? window.requestAnimationFrame.bind(window)
+                    : (cb) => setTimeout(cb, 16);
+                const cancelFrame = (typeof window !== 'undefined' && typeof window.cancelAnimationFrame === 'function')
+                    ? window.cancelAnimationFrame.bind(window)
+                    : (id) => clearTimeout(id);
+
                 const lens = document.createElement('div');
                 const result = document.createElement('div');
 
@@ -1639,37 +1689,99 @@
                 result.style.height = cfg.resultSize + 'px';
                 result.style.backgroundImage = `url(${imgElement.src})`;
                 result.style.backgroundRepeat = 'no-repeat';
-                result.style.backgroundSize = 'cover';
 
-                const container = imgElement.parentElement;
                 container.appendChild(lens);
                 container.appendChild(result);
 
-                const move = (e) => {
-                    const r = imgElement.getBoundingClientRect();
-                    const x = Math.max(0, Math.min(r.width, e.clientX - r.left));
-                    const y = Math.max(0, Math.min(r.height, e.clientY - r.top));
+                let rafId = null;
+                let lastEvent = null;
+
+                const updateLensPosition = () => {
+                    rafId = null;
+                    if (!lastEvent) return;
+
+                    const rect = imgElement.getBoundingClientRect();
+                    const clientX = lastEvent.clientX;
+                    const clientY = lastEvent.clientY;
+
+                    if (typeof clientX !== 'number' || typeof clientY !== 'number') {
+                        return;
+                    }
+
+                    const relativeX = clientX - rect.left;
+                    const relativeY = clientY - rect.top;
 
                     const half = cfg.lensSize / 2;
-                    lens.style.left = (x - half) + 'px';
-                    lens.style.top = (y - half) + 'px';
+                    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-                    // přepočet pro pozadí ve výsledku
-                    const fx = cfg.zoomLevel, fy = cfg.zoomLevel;
-                    const bgW = r.width * fx;
-                    const bgH = r.height * fy;
-                    result.style.backgroundSize = `${bgW}px ${bgH}px`;
-                    const bx = -x * fx + cfg.resultSize / 2;
-                    const by = -y * fy + cfg.resultSize / 2;
-                    result.style.backgroundPosition = `${bx}px ${by}px`;
+                    // Focus can reach every edge of the artwork
+                    const focusX = clamp(relativeX, 0, rect.width);
+                    const focusY = clamp(relativeY, 0, rect.height);
+
+                    // Lens chrome stays clamped to valid content
+                    const lensLeft = clamp(focusX - half, -half, Math.max(-half, rect.width - half));
+                    const lensTop = clamp(focusY - half, -half, Math.max(-half, rect.height - half));
+
+                    lens.style.left = lensLeft + 'px';
+                    lens.style.top = lensTop + 'px';
+
+                    const naturalWidth = imgElement.naturalWidth || imgElement.width || rect.width;
+                    const naturalHeight = imgElement.naturalHeight || imgElement.height || rect.height;
+                    const bgWidth = naturalWidth * cfg.zoomLevel;
+                    const bgHeight = naturalHeight * cfg.zoomLevel;
+                    result.style.backgroundSize = `${bgWidth}px ${bgHeight}px`;
+
+                    const scaleX = naturalWidth / rect.width;
+                    const scaleY = naturalHeight / rect.height;
+                    const backgroundX = -(focusX * scaleX * cfg.zoomLevel - cfg.resultSize / 2);
+                    const backgroundY = -(focusY * scaleY * cfg.zoomLevel - cfg.resultSize / 2);
+
+                    // Prevent blank space in zoomed preview
+                    const minBackgroundX = Math.min(0, cfg.resultSize - bgWidth);
+                    const minBackgroundY = Math.min(0, cfg.resultSize - bgHeight);
+
+                    result.style.backgroundPosition = `${clamp(backgroundX, minBackgroundX, 0)}px ${clamp(backgroundY, minBackgroundY, 0)}px`;
                 };
 
-                imgElement.addEventListener('mousemove', move);
+                const queuePositionUpdate = (event) => {
+                    lastEvent = event;
+                    if (rafId === null) {
+                        rafId = requestFrame(updateLensPosition);
+                    }
+                };
+
+                const handleMouseEnter = (event) => {
+                    lens.style.display = 'block';
+                    result.style.display = 'block';
+                    queuePositionUpdate(event);
+                };
+
+                const handleMouseMove = (event) => {
+                    queuePositionUpdate(event);
+                };
+
+                const handleMouseLeave = () => {
+                    lens.style.display = 'none';
+                    result.style.display = 'none';
+                    lastEvent = null;
+                };
+
+                container.addEventListener('mouseenter', handleMouseEnter);
+                container.addEventListener('mousemove', handleMouseMove);
+                container.addEventListener('mouseleave', handleMouseLeave);
+
                 return {
-                    destroy: () => { 
-                        imgElement.removeEventListener('mousemove', move); 
-                        lens.remove(); 
-                        result.remove(); 
+                    destroy: () => {
+                        if (rafId !== null) {
+                            cancelFrame(rafId);
+                            rafId = null;
+                        }
+                        lastEvent = null;
+                        container.removeEventListener('mouseenter', handleMouseEnter);
+                        container.removeEventListener('mousemove', handleMouseMove);
+                        container.removeEventListener('mouseleave', handleMouseLeave);
+                        lens.remove();
+                        result.remove();
                     }
                 };
             }
@@ -3277,7 +3389,7 @@
                             <div class="magnifier-container">
                                 <img id="${imageId}" 
                                      src="${imageUrl}" 
-                                     class="zoomable-scene-image" 
+                                     class="zoomable-scene-image magnifier-image" 
                                      alt="Puzzle obrázek">
                             </div>
                         </div>
@@ -3713,6 +3825,7 @@
                     contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, emptyBackground, stacked);
                     
                 } else if (page.type === 'win') {
+                    this.stopTimer();
                     // Výherní stránka
                     const winContentHtml = `
                         <div class="info-bubble max-w-2xl w-full text-center">
@@ -3741,6 +3854,7 @@
                     contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, backgroundCarouselHtml, winContentHtml);
                     
                 } else if (page.type === 'lose') {
+                    this.stopTimer();
                     // Proherní stránka
                     const loseContentHtml = `
                         <div class="info-bubble max-w-2xl w-full text-center">
@@ -3857,5 +3971,5 @@
             game.initialize(gameUrl);
         });
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99111a97b474bb9c',t:'MTc2MDg4NTU5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9911a55d1197b377',t:'MTc2MDg5MTI3OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
