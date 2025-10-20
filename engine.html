@@ -108,48 +108,63 @@
 
         /* Progress rail */
         .progress-rail {
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(5px);
+            background: rgba(0, 0, 0, 0.25);
+            backdrop-filter: blur(6px);
             border-radius: var(--border-radius-lg);
             padding: 0.75rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            width: 100%;
+        }
+
+        .progress-track {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             overflow-x: auto;
             scrollbar-width: none;
             -ms-overflow-style: none;
+            width: 100%;
+            min-width: 0;
         }
 
-        .progress-rail::-webkit-scrollbar {
+        .progress-track::-webkit-scrollbar {
             display: none;
         }
 
         .progress-step {
-            min-width: 40px;
+            width: 40px;
             height: 40px;
             border-radius: 999px;
-            display: flex;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
             font-weight: 600;
             font-size: 0.875rem;
-            transition: all 0.3s ease;
-            position: relative;
-            flex: 0 0 auto;
-            padding: 0 12px;
-            background: rgba(255, 255, 255, 0.35);
-            color: var(--neutral-800);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             border: 1px solid rgba(255, 255, 255, 0.45);
+            background: rgba(255, 255, 255, 0.3);
+            color: var(--neutral-900);
+            flex: 0 0 auto;
+            cursor: pointer;
         }
 
-        .progress-step::after {
-            display: none;
+        .progress-step:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px -4px rgb(14 165 233 / 0.35);
         }
 
-        .progress-step.progress-step--story {
-            background: rgba(255, 255, 255, 0.35);
-            color: var(--neutral-800);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+        .progress-step:disabled {
+            opacity: 0.45;
+            cursor: default;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .progress-step.progress-step--story,
+        .progress-step.progress-step--default {
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .progress-step.progress-step--win {
@@ -167,18 +182,24 @@
         .progress-step.completed {
             background: var(--success-500);
             color: white;
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.3);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.28);
         }
 
         .progress-step.current {
             background: var(--primary-500);
             color: white;
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.3);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.28);
             animation: pulse 2s infinite;
         }
 
-        .progress-step.pending {
-            opacity: 0.9;
+        .progress-step.visited {
+            background: rgba(255, 255, 255, 0.6);
+            color: var(--neutral-800);
+        }
+
+        .progress-step.locked {
+            background: rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.7);
         }
 
         .progress-step.failed {
@@ -654,78 +675,74 @@
 
         /* Soft Keyboards */
         .soft-keyboard {
-            margin: clamp(12px, 2vw, 20px) auto 0;
-            padding: clamp(12px, 2vw, 20px);
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: var(--border-radius-sm);
-            box-shadow: var(--shadow-md);
+            margin: clamp(14px, 2vw, 22px) 0 0;
+            padding: clamp(14px, 2vw, 22px);
+            background: linear-gradient(165deg, rgba(255, 255, 255, 0.96), rgba(241, 245, 249, 0.92));
+            border-radius: var(--border-radius);
+            box-shadow: 0 18px 40px -20px rgba(15, 23, 42, 0.45);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            backdrop-filter: blur(8px);
             display: grid;
-            gap: clamp(8px, 1.5vw, 12px);
-            width: min(100%, 520px);
-        }
-
-        .keyboard-row {
-            display: flex;
-            gap: clamp(8px, 1.5vw, 12px);
-            justify-content: center;
-            margin: 0;
+            gap: clamp(10px, 1.6vw, 18px);
             width: 100%;
-        }
-
-        .keyboard-row:last-child {
-            margin: 0;
+            max-width: none;
         }
 
         .keyboard-grid {
             display: grid;
-            gap: clamp(8px, 1.5vw, 12px);
-            justify-content: center;
-            margin: 0;
+            gap: clamp(10px, 1.6vw, 18px);
             width: 100%;
-            grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
-        }
-
-        .color-keyboard .keyboard-grid,
-        .shape-keyboard .keyboard-grid {
-            justify-items: center;
+            grid-auto-rows: minmax(52px, auto);
+            justify-items: stretch;
         }
 
         .keyboard-key {
-            min-width: 44px;
-            min-height: 44px;
-            border: 2px solid var(--neutral-300);
-            border-radius: var(--border-radius-sm);
-            background: white;
-            font-size: 1.25rem;
+            position: relative;
+            min-width: 48px;
+            min-height: 48px;
+            border-radius: 14px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(226, 232, 240, 0.96));
+            box-shadow: 0 10px 25px -18px rgba(15, 23, 42, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
             font-weight: 600;
+            color: var(--neutral-700);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--neutral-700);
-            width: 100%;
+            padding: 0.35rem 0.75rem;
         }
 
         .keyboard-key:hover {
-            border-color: var(--primary-400);
-            background: var(--primary-50);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 14px 24px -16px rgba(14, 165, 233, 0.55);
+            border-color: rgba(14, 165, 233, 0.45);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 1), rgba(224, 242, 254, 0.95));
         }
 
         .keyboard-key:active {
             transform: translateY(0);
+            box-shadow: inset 0 1px 4px rgba(15, 23, 42, 0.2);
         }
 
         .keyboard-key.backspace-key {
-            background: var(--danger-50);
-            border-color: var(--danger-300);
+            background: linear-gradient(180deg, rgba(254, 242, 242, 0.96), rgba(254, 226, 226, 0.9));
+            border-color: rgba(248, 113, 113, 0.45);
             color: var(--danger-600);
         }
 
         .keyboard-key.backspace-key:hover {
-            background: var(--danger-100);
-            border-color: var(--danger-400);
+            border-color: rgba(239, 68, 68, 0.6);
+            box-shadow: 0 14px 28px -18px rgba(248, 113, 113, 0.65);
+            background: linear-gradient(180deg, rgba(254, 242, 242, 1), rgba(254, 215, 215, 0.95));
+        }
+
+        .keyboard-key.wide-key {
+            grid-column: 1 / -1;
+            justify-self: center;
+            min-width: min(220px, 100%);
         }
 
         /* Arrow Keys */
@@ -733,40 +750,60 @@
             font-size: 1.5rem;
         }
 
-        .numeric-keyboard {
-            grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+        .numeric-keyboard .keyboard-grid {
+            grid-template-columns: repeat(3, minmax(64px, 1fr));
             justify-items: stretch;
-            grid-auto-flow: dense;
         }
 
-        .numeric-keyboard .keyboard-row {
-            display: contents;
+        .numeric-keyboard .keyboard-grid .keyboard-key {
+            min-height: 56px;
         }
 
-        .numeric-keyboard .keyboard-row:nth-child(-n + 3) .keyboard-key {
-            aspect-ratio: 1 / 1;
-        }
-
-        .numeric-keyboard .keyboard-row:last-child .keyboard-key:first-child {
+        .numeric-keyboard .keyboard-grid .keyboard-key.zero-key {
             grid-column: span 2;
         }
 
-        .numeric-keyboard .keyboard-row:last-child .keyboard-key {
-            aspect-ratio: auto;
+        .numeric-keyboard .keyboard-grid .backspace-key {
+            align-self: stretch;
         }
 
-        .arrow-keyboard {
-            grid-template-columns: repeat(auto-fit, minmax(56px, 1fr));
+        .arrow-keyboard .keyboard-grid {
+            grid-template-columns: repeat(3, minmax(60px, 1fr));
+            grid-template-rows: repeat(3, minmax(56px, auto)) minmax(56px, auto);
+            grid-template-areas:
+                ". up ."
+                "left . right"
+                ". down ."
+                "wide wide wide";
             justify-items: stretch;
-            grid-auto-flow: dense;
         }
 
-        .arrow-keyboard .keyboard-row {
-            display: contents;
-        }
-
-        .arrow-keyboard .keyboard-key {
+        .arrow-keyboard .arrow-key {
             aspect-ratio: 1 / 1;
+            font-size: 1.5rem;
+        }
+
+        .arrow-keyboard .arrow-up {
+            grid-area: up;
+        }
+
+        .arrow-keyboard .arrow-left {
+            grid-area: left;
+        }
+
+        .arrow-keyboard .arrow-right {
+            grid-area: right;
+        }
+
+        .arrow-keyboard .arrow-down {
+            grid-area: down;
+        }
+
+        .arrow-keyboard .wide-key {
+            grid-area: wide;
+            max-width: none;
+            justify-self: stretch;
+            min-width: 0;
         }
 
         .color-keyboard,
@@ -950,12 +987,15 @@
         .content-stack {
             display: grid;
             grid-template-columns: 1fr;
-            grid-template-rows: minmax(0, 1fr) auto;
+            grid-template-rows: minmax(0, 2fr) minmax(220px, 1fr);
             gap: clamp(16px, 2vw, 24px);
             min-height: 0;
+            height: 100%;
+            align-items: stretch;
         }
 
-        .content-stack > * {
+        .content-stack__visual,
+        .content-stack__panel {
             min-height: 0;
             display: flex;
             flex-direction: column;
@@ -963,11 +1003,28 @@
             overflow: hidden;
         }
 
+        .content-stack__panel {
+            overflow: auto;
+        }
+
+        .content-stack__visual:empty {
+            display: none;
+        }
+
+        .content-stack__visual:empty + .content-stack__panel {
+            grid-row: 1 / -1;
+        }
+
+        @media (min-width: 768px) {
+            .content-stack {
+                grid-template-rows: minmax(0, 1.75fr) minmax(240px, 1fr);
+            }
+        }
+
         @media (min-width: 1024px) {
             .content-stack {
-                grid-template-columns: minmax(0, 1fr) minmax(320px, 520px);
+                grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
                 grid-template-rows: minmax(0, 1fr);
-                align-items: stretch;
             }
         }
 
@@ -975,6 +1032,8 @@
         .puzzle-bubble {
             height: 100%;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         .puzzle-bubble .puzzle-body {
@@ -1016,7 +1075,7 @@
         .lock-container {
             display: flex;
             flex-direction: column;
-            max-width: 740px;
+            width: 100%;
             margin-left: auto;
             margin-right: auto;
             flex: 1;
@@ -1024,14 +1083,16 @@
             overflow: auto;
         }
 
-        .lock-container .soft-keyboard,
-        .lock-container .ui-actions {
-            margin-top: auto;
+        .content-stack__panel .lock-container {
+            max-width: none;
+            height: 100%;
+            margin: 0;
         }
 
-        /* šipky v jedné řadě */
-        .arrow-keyboard .arrows-row .keyboard-key { 
-            min-width: 56px; 
+        .content-stack__panel .soft-keyboard {
+            max-width: 100%;
+            margin-left: 0;
+            margin-right: 0;
         }
 
         /* víc tvarů do řady na desktopu */
@@ -1460,6 +1521,76 @@
                 }
             }
 
+            // Helper pro sběr URL obrázků z různých zdrojů
+            collectImageUrls(...inputs) {
+                const urls = [];
+                const seenUrls = new Set();
+
+                const visit = (value) => {
+                    if (value == null) return;
+
+                    if (Array.isArray(value)) {
+                        value.forEach(visit);
+                        return;
+                    }
+
+                    const url = this.extractImageUrl(value);
+                    if (url && !seenUrls.has(url)) {
+                        seenUrls.add(url);
+                        urls.push(url);
+                    }
+                };
+
+                inputs.forEach(visit);
+                return urls;
+            }
+
+            // Vyřešení prvního dostupného obrázku ze zdrojů
+            resolveImageSource(...inputs) {
+                const [first] = this.collectImageUrls(...inputs);
+                return first || null;
+            }
+
+            // Extrakce URL obrázku z různých formátů dat
+            extractImageUrl(value, seenObjects = new Set()) {
+                if (value == null) {
+                    return null;
+                }
+
+                if (typeof value === 'string') {
+                    const trimmed = value.trim();
+                    return trimmed || null;
+                }
+
+                if (typeof value === 'object') {
+                    if (seenObjects.has(value)) {
+                        return null;
+                    }
+
+                    seenObjects.add(value);
+
+                    const preferredKeys = ['url', 'src', 'image', 'image_url', 'imageUrl', 'href', 'desktop', 'mobile', 'tablet', 'default'];
+
+                    for (const key of preferredKeys) {
+                        if (value && Object.prototype.hasOwnProperty.call(value, key)) {
+                            const found = this.extractImageUrl(value[key], seenObjects);
+                            if (found) {
+                                return found;
+                            }
+                        }
+                    }
+
+                    for (const nested of Object.values(value)) {
+                        const found = this.extractImageUrl(nested, seenObjects);
+                        if (found) {
+                            return found;
+                        }
+                    }
+                }
+
+                return null;
+            }
+
             // Normalizace dat - převod na konzistentní formát
             normalizeGame(data) {
                 const sanitizeId = (value) => {
@@ -1468,6 +1599,14 @@
                         return trimmed.length ? trimmed : null;
                     }
                     return value ?? null;
+                };
+
+                const sanitizeLabel = (value) => {
+                    if (typeof value === 'string') {
+                        const trimmed = value.trim();
+                        return trimmed.length ? trimmed : null;
+                    }
+                    return null;
                 };
 
                 const mapLock = (lock, assets) => {
@@ -1553,19 +1692,37 @@
                         const id = sanitizeId(rawId) || rawId;
                         const nextSuccess = sanitizeId(p.next_on_success);
                         const nextFail = sanitizeId(p.next_on_fail);
-                        
-                        // Normalizace pozadí podle typu stránky
-                        const backgroundFromData = p.background_imgs || (p.background_img ? [p.background_img] : []);
-                        const backgroundFromUi = p.ui?.background_imgs || (p.ui?.background_img ? [p.ui.background_img] : []);
 
-                        let background_imgs;
-                        if (type === 'magnifier' || type === 'lock') {
-                            background_imgs = backgroundFromUi.length ? backgroundFromUi : backgroundFromData;
-                        } else if (type === 'story') {
-                            background_imgs = backgroundFromData.length ? backgroundFromData : backgroundFromUi;
-                        } else {
-                            background_imgs = backgroundFromData.length ? backgroundFromData : backgroundFromUi;
+                        // Sběr obrázků z různých zdrojů
+                        const elementImages = this.collectImageUrls((p.elements || []).map(element => [element.image_url, element.src, element.url]));
+                        const uiSceneImages = this.collectImageUrls(p.ui?.scene_img);
+                        const uiPuzzleImages = this.collectImageUrls(p.ui?.puzzle_img);
+                        const uiBackgroundImages = this.collectImageUrls(p.ui?.background_imgs, p.ui?.background_img);
+                        const pageBackgroundImages = this.collectImageUrls(p.background_imgs, p.background_img);
+
+                        // Prioritizace pozadí podle typu stránky
+                        const orderedBackgroundCandidates = type === 'story'
+                            ? [...pageBackgroundImages, ...uiBackgroundImages, ...uiSceneImages]
+                            : [...uiBackgroundImages, ...pageBackgroundImages, ...uiSceneImages];
+
+                        let background_imgs = this.collectImageUrls(orderedBackgroundCandidates);
+
+                        // Fallback pokud nemáme žádné pozadí
+                        if (!background_imgs.length) {
+                            background_imgs = this.collectImageUrls(uiPuzzleImages, elementImages, pageBackgroundImages);
                         }
+
+                        // Určení hlavního scene obrázku pro magnifier/puzzle
+                        const sceneImageCandidates = this.collectImageUrls(
+                            uiSceneImages,
+                            uiPuzzleImages,
+                            background_imgs,
+                            elementImages,
+                            pageBackgroundImages
+                        );
+
+                        const scene_image = sceneImageCandidates[0] || null;
+                        const progress_label = sanitizeLabel(p.progress_label || p.ui?.progress_label || '') || null;
                         
                         const title = p.info?.title || p.title || '';
                         const description = p.info?.text || p.info?.story || p.description || '';
@@ -1577,6 +1734,8 @@
                             title,
                             description,
                             background_imgs,
+                            scene_image,
+                            progress_label,
                             next_on_success: nextSuccess,
                             next_on_fail: nextFail,
                             // transformace zámku do engine formátu
@@ -1606,18 +1765,23 @@
             // Přednačtení všech obrázků
             async preloadImages(data) {
                 const imageUrls = new Set();
-                
-                // Sbírání všech URL obrázků
+
+                const pushUrls = (...sources) => {
+                    this.collectImageUrls(...sources).forEach(url => imageUrls.add(url));
+                };
+
+                // Sbírání všech URL obrázků ze všech zdrojů
                 data.pages.forEach(page => {
-                    // Background obrázky
-                    page.background_imgs?.forEach(url => {
-                        if (url) imageUrls.add(url);
-                    });
-                    
-                    // Obrázky v elementech
-                    page.elements?.forEach(element => {
-                        if (element.image_url) imageUrls.add(element.image_url);
-                    });
+                    pushUrls(page.background_imgs, page.background_img);
+                    pushUrls(page.scene_image);
+                    pushUrls(page.ui?.puzzle_img, page.ui?.scene_img);
+                    pushUrls(page.ui?.background_imgs, page.ui?.background_img);
+
+                    if (page.elements) {
+                        page.elements.forEach(element => {
+                            pushUrls(element?.image_url, element?.src, element?.url);
+                        });
+                    }
                 });
 
                 this.showLoading(`Načítám obrázky... (0/${imageUrls.size})`);
@@ -2222,26 +2386,17 @@
                 ).join('');
                 
                 // Soft keyboard
+                const numericKeys = ['1','2','3','4','5','6','7','8','9','0'];
+                const numericButtons = numericKeys.map(num => {
+                    const extraClass = num === '0' ? ' zero-key' : '';
+                    return `<button class="keyboard-key${extraClass}" onclick="game.inputNumericKey('${lockId}', '${num}')" aria-label="Číslo ${num}">${num}</button>`;
+                }).join('');
+
                 const keyboardHtml = `
                     <div class="soft-keyboard numeric-keyboard" role="group" aria-label="Číselná klávesnice">
-                        <div class="keyboard-row">
-                            ${[1, 2, 3].map(num => 
-                                `<button class="keyboard-key" onclick="game.inputNumericKey('${lockId}', '${num}')" aria-label="Číslo ${num}" tabindex="0">${num}</button>`
-                            ).join('')}
-                        </div>
-                        <div class="keyboard-row">
-                            ${[4, 5, 6].map(num => 
-                                `<button class="keyboard-key" onclick="game.inputNumericKey('${lockId}', '${num}')" aria-label="Číslo ${num}" tabindex="0">${num}</button>`
-                            ).join('')}
-                        </div>
-                        <div class="keyboard-row">
-                            ${[7, 8, 9].map(num => 
-                                `<button class="keyboard-key" onclick="game.inputNumericKey('${lockId}', '${num}')" aria-label="Číslo ${num}" tabindex="0">${num}</button>`
-                            ).join('')}
-                        </div>
-                        <div class="keyboard-row">
-                            <button class="keyboard-key" onclick="game.inputNumericKey('${lockId}', '0')" aria-label="Číslo 0" tabindex="0">0</button>
-                            <button class="keyboard-key backspace-key" onclick="game.numericBackspace('${lockId}')" aria-label="Smazat (Backspace)" tabindex="0">⌫</button>
+                        <div class="keyboard-grid">
+                            ${numericButtons}
+                            <button class="keyboard-key backspace-key" onclick="game.numericBackspace('${lockId}')" aria-label="Smazat (Backspace)">⌫</button>
                         </div>
                     </div>
                 `;
@@ -2289,14 +2444,12 @@
                 
                 const keyboardHtml = `
                     <div class="soft-keyboard arrow-keyboard">
-                        <div class="keyboard-row arrows-row">
-                            <button class="keyboard-key arrow-key" onclick="game.inputSequenceKey('${lockId}', '←')">←</button>
-                            <button class="keyboard-key arrow-key" onclick="game.inputSequenceKey('${lockId}', '↑')">↑</button>
-                            <button class="keyboard-key arrow-key" onclick="game.inputSequenceKey('${lockId}', '↓')">↓</button>
-                            <button class="keyboard-key arrow-key" onclick="game.inputSequenceKey('${lockId}', '→')">→</button>
-                        </div>
-                        <div class="keyboard-row">
-                            <button class="keyboard-key backspace-key" onclick="game.sequenceBackspace('${lockId}')">⌫</button>
+                        <div class="keyboard-grid">
+                            <button class="keyboard-key arrow-key arrow-up" onclick="game.inputSequenceKey('${lockId}', '↑')">↑</button>
+                            <button class="keyboard-key arrow-key arrow-left" onclick="game.inputSequenceKey('${lockId}', '←')">←</button>
+                            <button class="keyboard-key arrow-key arrow-right" onclick="game.inputSequenceKey('${lockId}', '→')">→</button>
+                            <button class="keyboard-key arrow-key arrow-down" onclick="game.inputSequenceKey('${lockId}', '↓')">↓</button>
+                            <button class="keyboard-key backspace-key wide-key" onclick="game.sequenceBackspace('${lockId}')">⌫ Smazat</button>
                         </div>
                     </div>
                 `;
@@ -2368,8 +2521,6 @@
                     <div class="soft-keyboard color-keyboard">
                         <div class="keyboard-grid">
                             ${colorKeysHtml}
-                        </div>
-                        <div class="keyboard-row">
                             <button class="keyboard-key backspace-key" onclick="game.sequenceBackspace('${lockId}')">⌫</button>
                         </div>
                     </div>
@@ -2440,8 +2591,6 @@
                     <div class="soft-keyboard shape-keyboard">
                         <div class="keyboard-grid">
                             ${shapeKeysHtml}
-                        </div>
-                        <div class="keyboard-row">
                             <button class="keyboard-key backspace-key" onclick="game.sequenceBackspace('${lockId}')">⌫</button>
                         </div>
                     </div>
@@ -2829,1372 +2978,4 @@
             inputSequenceKey(lockId, value) {
                 const lockElement = document.getElementById(lockId);
                 if (!lockElement) return;
-                
-                const selectedSlot = parseInt(lockElement.dataset.selectedSlot || '0');
-                const inputs = JSON.parse(lockElement.dataset.inputs || '[]');
-                
-                // Nastavení hodnoty do vybraného slotu
-                inputs[selectedSlot] = value;
-                lockElement.dataset.inputs = JSON.stringify(inputs);
-                
-                // Aktualizace zobrazení slotu
-                this.updateSequenceSlotDisplay(lockId, selectedSlot, value);
-                
-                // Automatický přechod na další slot
-                const nextSlot = selectedSlot + 1;
-                if (nextSlot < inputs.length) {
-                    this.selectSequenceSlot(lockId, nextSlot);
-                }
-                
-                // Skrytí zpětné vazby
-                const feedbackElement = document.getElementById(lockId + '-feedback');
-                if (feedbackElement) {
-                    feedbackElement.style.display = 'none';
-                }
-            }
-
-            // Aktualizace zobrazení slotu sekvence
-            updateSequenceSlotDisplay(lockId, slotIndex, value) {
-                const slotElement = document.getElementById(`${lockId}-slot-${slotIndex}`);
-                if (!slotElement) return;
-                
-                const lockElement = document.getElementById(lockId);
-                
-                if (slotElement.classList.contains('arrow-slot')) {
-                    // Šipkový slot
-                    const content = slotElement.querySelector('.slot-content');
-                    if (content) {
-                        content.textContent = value || '';
-                    }
-                } else if (slotElement.classList.contains('color-slot')) {
-                    // Barevný slot
-                    const circle = slotElement.querySelector('.color-circle');
-                    const nameElement = slotElement.querySelector('.color-name');
-                    const colors = JSON.parse(lockElement.dataset.colors || '{}');
-                    
-                    if (circle && value && colors[value]) {
-                        circle.style.backgroundColor = colors[value];
-                        circle.style.borderColor = colors[value];
-                    } else if (circle) {
-                        circle.style.backgroundColor = 'var(--neutral-100)';
-                        circle.style.borderColor = 'var(--neutral-300)';
-                    }
-                    
-                    if (nameElement) {
-                        nameElement.textContent = value || '';
-                    }
-                } else if (slotElement.classList.contains('shape-slot')) {
-                    // Tvarový slot
-                    const container = slotElement.querySelector('.shape-container');
-                    const shapes = JSON.parse(lockElement.dataset.shapes || '{}');
-                    
-                    if (container && value && shapes[value]) {
-                        container.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24">${shapes[value]}</svg>`;
-                    } else if (container) {
-                        container.innerHTML = '';
-                    }
-                }
-                
-                // Odstranění stavových tříd
-                slotElement.classList.remove('correct', 'incorrect');
-            }
-
-            // Backspace pro sekvence
-            sequenceBackspace(lockId) {
-                const lockElement = document.getElementById(lockId);
-                if (!lockElement) return;
-                
-                const selectedSlot = parseInt(lockElement.dataset.selectedSlot || '0');
-                const inputs = JSON.parse(lockElement.dataset.inputs || '[]');
-                
-                // Vymazání aktuálního slotu nebo přechod na předchozí
-                if (inputs[selectedSlot] !== '') {
-                    inputs[selectedSlot] = '';
-                    this.updateSequenceSlotDisplay(lockId, selectedSlot, '');
-                } else if (selectedSlot > 0) {
-                    inputs[selectedSlot - 1] = '';
-                    this.updateSequenceSlotDisplay(lockId, selectedSlot - 1, '');
-                    this.selectSequenceSlot(lockId, selectedSlot - 1);
-                }
-                
-                lockElement.dataset.inputs = JSON.stringify(inputs);
-                
-                // Skrytí zpětné vazby
-                const feedbackElement = document.getElementById(lockId + '-feedback');
-                if (feedbackElement) {
-                    feedbackElement.style.display = 'none';
-                }
-            }
-
-            // Kontrola sekvence zámku
-            checkSequenceLock(lockId, type) {
-                const lockElement = document.getElementById(lockId);
-                if (!lockElement) return;
-                
-                const config = JSON.parse(lockElement.dataset.config);
-                const inputs = JSON.parse(lockElement.dataset.inputs || '[]');
-                
-                let result;
-                switch (type) {
-                    case 'arrows':
-                        result = this.evalArrows(inputs, config.solution);
-                        break;
-                    case 'colors':
-                        result = this.evalColors(inputs, config.solution);
-                        break;
-                    case 'shapes':
-                        result = this.evalShapes(inputs, config.solution);
-                        break;
-                    default:
-                        result = { success: false, feedback: 'Neznámý typ sekvence' };
-                }
-                
-                this.showLockFeedback(lockId, result);
-                
-                // Vizuální zpětná vazba na sloty
-                if (result.positions) {
-                    result.positions.forEach((status, index) => {
-                        const slot = document.getElementById(`${lockId}-slot-${index}`);
-                        if (slot) {
-                            slot.classList.remove('correct', 'incorrect');
-                            if (status === 'correct') slot.classList.add('correct');
-                            if (status === 'incorrect') slot.classList.add('incorrect');
-                        }
-                    });
-                }
-                
-                if (result.success) {
-                    setTimeout(() => {
-                        this.onResolve(this.state.currentId, true);
-                    }, 1500);
-                }
-            }
-
-            // Reset sekvence zámku
-            resetSequenceLock(lockId) {
-                const lockElement = document.getElementById(lockId);
-                if (!lockElement) return;
-                
-                const config = JSON.parse(lockElement.dataset.config);
-                const inputCount = config.solution.sequence.length;
-                const emptyInputs = new Array(inputCount).fill('');
-                
-                lockElement.dataset.inputs = JSON.stringify(emptyInputs);
-                lockElement.dataset.selectedSlot = '0';
-                
-                // Reset zobrazení všech slotů
-                for (let i = 0; i < inputCount; i++) {
-                    this.updateSequenceSlotDisplay(lockId, i, '');
-                }
-                
-                this.selectSequenceSlot(lockId, 0);
-                
-                const feedbackElement = document.getElementById(lockId + '-feedback');
-                if (feedbackElement) {
-                    feedbackElement.style.display = 'none';
-                }
-            }
-
-            // === DÁVKA 10: CRYPTEX METHODS ===
-
-            // Otočení kolečka cryptexu
-            rotateCryptexWheel(lockId, wheelIndex, direction) {
-                const lockElement = document.getElementById(lockId);
-                if (!lockElement) return;
-                
-                const wheels = JSON.parse(lockElement.dataset.wheels || '[]');
-                const positions = JSON.parse(lockElement.dataset.positions || '[]');
-                
-                if (!wheels[wheelIndex] || positions[wheelIndex] === undefined) return;
-                
-                const wheelChars = wheels[wheelIndex];
-                const currentPos = positions[wheelIndex];
-                
-                // Výpočet nové pozice (cyklické otáčení)
-                let newPos = currentPos + direction;
-                if (newPos < 0) newPos = wheelChars.length - 1;
-                if (newPos >= wheelChars.length) newPos = 0;
-                
-                positions[wheelIndex] = newPos;
-                lockElement.dataset.positions = JSON.stringify(positions);
-                
-                // Aktualizace zobrazení
-                const charElement = document.getElementById(`${lockId}-char-${wheelIndex}`);
-                if (charElement) {
-                    charElement.textContent = wheelChars[newPos];
-                    
-                    // Animace otáčení
-                    charElement.style.transform = direction > 0 ? 'translateY(-10px)' : 'translateY(10px)';
-                    charElement.style.opacity = '0.5';
-                    
-                    setTimeout(() => {
-                        charElement.style.transform = 'translateY(0)';
-                        charElement.style.opacity = '1';
-                    }, 150);
-                }
-                
-                // Skrytí zpětné vazby
-                const feedbackElement = document.getElementById(lockId + '-feedback');
-                if (feedbackElement) {
-                    feedbackElement.style.display = 'none';
-                }
-                
-                // Odstranění stavových tříd
-                const wheelElement = charElement?.parentElement;
-                if (wheelElement) {
-                    wheelElement.classList.remove('correct', 'incorrect');
-                }
-            }
-
-            // Kontrola cryptex zámku
-            checkCryptexLock(lockId) {
-                const lockElement = document.getElementById(lockId);
-                if (!lockElement) return;
-                
-                const config = JSON.parse(lockElement.dataset.config);
-                const wheels = JSON.parse(lockElement.dataset.wheels || '[]');
-                const positions = JSON.parse(lockElement.dataset.positions || '[]');
-                
-                // Sestavení aktuálního slova
-                const currentWord = positions.map((pos, index) => {
-                    const wheelChars = wheels[index] || [];
-                    return wheelChars[pos] || '';
-                }).join('');
-                
-                const result = this.evalCryptex([currentWord], config.solution);
-                this.showLockFeedback(lockId, result);
-                
-                // Vizuální zpětná vazba na kolečka
-                positions.forEach((pos, index) => {
-                    const charElement = document.getElementById(`${lockId}-char-${index}`);
-                    const wheelElement = charElement?.parentElement;
-                    if (wheelElement) {
-                        wheelElement.classList.remove('correct', 'incorrect');
-                        
-                        const expectedChar = config.solution.word[index];
-                        const currentChar = wheels[index]?.[pos] || '';
-                        const caseSensitive = config.solution.case_sensitive || false;
-                        
-                        const isCorrect = caseSensitive ? 
-                            currentChar === expectedChar : 
-                            currentChar.toLowerCase() === expectedChar.toLowerCase();
-                        
-                        wheelElement.classList.add(isCorrect ? 'correct' : 'incorrect');
-                    }
-                });
-                
-                if (result.success) {
-                    setTimeout(() => {
-                        this.onResolve(this.state.currentId, true);
-                    }, 1500);
-                }
-            }
-
-            // Reset cryptex zámku
-            resetCryptexLock(lockId) {
-                const lockElement = document.getElementById(lockId);
-                if (!lockElement) return;
-                
-                const config = JSON.parse(lockElement.dataset.config);
-                const wheels = JSON.parse(lockElement.dataset.wheels || '[]');
-                const resetPositions = new Array(wheels.length).fill(0);
-                
-                lockElement.dataset.positions = JSON.stringify(resetPositions);
-                
-                // Reset zobrazení všech koleček
-                resetPositions.forEach((pos, index) => {
-                    const charElement = document.getElementById(`${lockId}-char-${index}`);
-                    const wheelElement = charElement?.parentElement;
-                    
-                    if (charElement && wheels[index]) {
-                        charElement.textContent = wheels[index][pos] || '';
-                        charElement.style.transform = 'translateY(0)';
-                        charElement.style.opacity = '1';
-                    }
-                    
-                    if (wheelElement) {
-                        wheelElement.classList.remove('correct', 'incorrect');
-                    }
-                });
-                
-                const feedbackElement = document.getElementById(lockId + '-feedback');
-                if (feedbackElement) {
-                    feedbackElement.style.display = 'none';
-                }
-            }
-
-            // === DÁVKA 10: QUIZ METHODS ===
-
-            // Aktualizace pokroku kvízu
-            updateQuizProgress(lockId) {
-                const lockElement = document.getElementById(lockId);
-                if (!lockElement) return;
-                
-                const questions = lockElement.querySelectorAll('.quiz-question');
-                const totalQuestions = questions.length;
-                let answeredCount = 0;
-                
-                questions.forEach((question, index) => {
-                    const selectedAnswer = lockElement.querySelector(`input[name="${lockId}-q${index}"]:checked`);
-                    if (selectedAnswer) {
-                        answeredCount++;
-                        question.classList.add('answered');
-                        
-                        // Označení vybrané odpovědi
-                        question.querySelectorAll('.quiz-answer').forEach(answer => {
-                            answer.classList.remove('selected');
-                        });
-                        selectedAnswer.closest('.quiz-answer').classList.add('selected');
-                    } else {
-                        question.classList.remove('answered');
-                    }
-                });
-                
-                // Aktualizace progress baru
-                const progressFill = document.getElementById(`${lockId}-progress`);
-                const progressText = document.getElementById(`${lockId}-progress-text`);
-                const submitButton = document.getElementById(`${lockId}-submit`);
-                
-                if (progressFill) {
-                    const percentage = (answeredCount / totalQuestions) * 100;
-                    progressFill.style.width = percentage + '%';
-                }
-                
-                if (progressText) {
-                    progressText.textContent = `${answeredCount} / ${totalQuestions} odpovězeno`;
-                }
-                
-                if (submitButton) {
-                    submitButton.disabled = answeredCount < totalQuestions;
-                }
-                
-                // Skrytí zpětné vazby
-                const feedbackElement = document.getElementById(lockId + '-feedback');
-                if (feedbackElement) {
-                    feedbackElement.style.display = 'none';
-                }
-            }
-
-            // Kontrola quiz zámku
-            checkQuizLock(lockId) {
-                const lockElement = document.getElementById(lockId);
-                if (!lockElement) return;
-                
-                const config = JSON.parse(lockElement.dataset.config);
-                const questions = JSON.parse(lockElement.dataset.questions || '[]');
-                const minRatio = parseFloat(lockElement.dataset.minRatio || '0.8');
-                
-                let correctAnswers = 0;
-                const userAnswers = [];
-                
-                // Vyhodnocení odpovědí
-                questions.forEach((question, index) => {
-                    const selectedAnswer = lockElement.querySelector(`input[name="${lockId}-q${index}"]:checked`);
-                    const selectedValue = selectedAnswer ? parseInt(selectedAnswer.value) : -1;
-                    const isCorrect = selectedValue === question.correct_answer;
-                    
-                    userAnswers.push(selectedValue);
-                    if (isCorrect) correctAnswers++;
-                    
-                    // Vizuální zpětná vazba na otázku
-                    const questionElement = lockElement.querySelector(`[data-question-index="${index}"]`);
-                    if (questionElement) {
-                        questionElement.classList.remove('correct', 'incorrect');
-                        questionElement.classList.add(isCorrect ? 'correct' : 'incorrect');
-                        
-                        // Označení správných a špatných odpovědí
-                        questionElement.querySelectorAll('.quiz-answer').forEach((answerElement, answerIndex) => {
-                            answerElement.classList.remove('correct-answer', 'wrong-answer');
-                            
-                            if (answerIndex === question.correct_answer) {
-                                answerElement.classList.add('correct-answer');
-                            } else if (answerIndex === selectedValue && !isCorrect) {
-                                answerElement.classList.add('wrong-answer');
-                            }
-                        });
-                    }
-                });
-                
-                const successRatio = correctAnswers / questions.length;
-                const result = {
-                    success: successRatio >= minRatio,
-                    feedback: `Správně ${correctAnswers} z ${questions.length} otázek (${Math.round(successRatio * 100)}%). ${
-                        successRatio >= minRatio ? 'Test úspěšně splněn!' : `Potřebujete alespoň ${Math.ceil(questions.length * minRatio)} správných odpovědí.`
-                    }`
-                };
-                
-                this.showLockFeedback(lockId, result);
-                
-                if (result.success) {
-                    setTimeout(() => {
-                        this.onResolve(this.state.currentId, true);
-                    }, 2000);
-                }
-            }
-
-            // Reset quiz zámku
-            resetQuizLock(lockId) {
-                const lockElement = document.getElementById(lockId);
-                if (!lockElement) return;
-                
-                // Vymazání všech odpovědí
-                lockElement.querySelectorAll('input[type="radio"]').forEach(input => {
-                    input.checked = false;
-                });
-                
-                // Reset vizuálních stavů
-                lockElement.querySelectorAll('.quiz-question').forEach(question => {
-                    question.classList.remove('answered', 'correct', 'incorrect');
-                });
-                
-                lockElement.querySelectorAll('.quiz-answer').forEach(answer => {
-                    answer.classList.remove('selected', 'correct-answer', 'wrong-answer');
-                });
-                
-                // Reset progress baru
-                const progressFill = document.getElementById(`${lockId}-progress`);
-                const progressText = document.getElementById(`${lockId}-progress-text`);
-                const submitButton = document.getElementById(`${lockId}-submit`);
-                
-                if (progressFill) progressFill.style.width = '0%';
-                if (progressText) {
-                    const totalQuestions = lockElement.querySelectorAll('.quiz-question').length;
-                    progressText.textContent = `0 / ${totalQuestions} odpovězeno`;
-                }
-                if (submitButton) submitButton.disabled = true;
-                
-                const feedbackElement = document.getElementById(lockId + '-feedback');
-                if (feedbackElement) {
-                    feedbackElement.style.display = 'none';
-                }
-            }
-
-            // === LEGACY METHODS (for compatibility) ===
-
-            // Aktualizace vstupu zámku (legacy)
-            updateLockInput(lockId, index, value) {
-                const lockElement = document.getElementById(lockId);
-                if (!lockElement) return;
-                
-                // Uložení hodnoty do data atributu
-                if (!lockElement.dataset.inputs) {
-                    lockElement.dataset.inputs = JSON.stringify({});
-                }
-                
-                const inputs = JSON.parse(lockElement.dataset.inputs);
-                inputs[index] = value;
-                lockElement.dataset.inputs = JSON.stringify(inputs);
-            }
-
-            // Kontrola zámku (legacy)
-            checkLock(lockId, mode) {
-                const lockElement = document.getElementById(lockId);
-                if (!lockElement) return;
-                
-                const inputs = JSON.parse(lockElement.dataset.inputs || '{}');
-                const inputArray = Object.values(inputs);
-                
-                // Získání konfigurace zámku (pro demo použijeme základní)
-                const config = this.getLockConfig(mode);
-                
-                let result;
-                switch (mode) {
-                    case 'numeric':
-                        result = this.evalNumeric(inputArray, config.solution);
-                        break;
-                    case 'text':
-                        result = this.evalText(inputArray, config.solution);
-                        break;
-                    default:
-                        result = { success: false, feedback: 'Neznámý typ zámku' };
-                }
-                
-                this.showLockFeedback(lockId, result);
-                
-                if (result.success) {
-                    setTimeout(() => {
-                        this.onResolve(this.state.currentId, true);
-                    }, 1500);
-                }
-            }
-
-            // Získání konfigurace zámku pro demo
-            getLockConfig(mode) {
-                const configs = {
-                    numeric: { solution: { sequence: [1, 2, 3, 4] } },
-                    text: { solution: { word: 'ESCAPE' } }
-                };
-                return configs[mode] || configs.numeric;
-            }
-
-            // Zobrazení zpětné vazby zámku s A11y podporou
-            showLockFeedback(lockId, result) {
-                const feedbackElement = document.getElementById(lockId + '-feedback');
-                if (!feedbackElement) return;
-                
-                feedbackElement.style.display = 'block';
-                feedbackElement.textContent = result.feedback;
-                feedbackElement.className = `lock-feedback ${result.success ? 'success' : 'error'}`;
-                
-                // Oznámení pro screen readery
-                if (result.success) {
-                    this.announceToScreenReader(`Zámek odemčen! ${result.feedback}`);
-                } else {
-                    this.announceToScreenReader(`Nesprávně. ${result.feedback}`);
-                }
-                
-                // Aktualizace stylů vstupů (legacy)
-                if (result.positions) {
-                    result.positions.forEach((status, index) => {
-                        const input = document.getElementById(`${lockId}-${index}`);
-                        if (input) {
-                            input.classList.remove('correct', 'incorrect');
-                            if (status === 'correct') input.classList.add('correct');
-                            if (status === 'incorrect') input.classList.add('incorrect');
-                        }
-                    });
-                }
-            }
-
-            // Reset zámku (legacy)
-            resetLock(lockId) {
-                const lockElement = document.getElementById(lockId);
-                if (!lockElement) return;
-                
-                // Vymazání všech vstupů
-                lockElement.querySelectorAll('.lock-input').forEach(input => {
-                    input.value = '';
-                    input.classList.remove('correct', 'incorrect');
-                });
-                
-                // Reset dat
-                lockElement.dataset.inputs = JSON.stringify({});
-                
-                // Skrytí zpětné vazby
-                const feedbackElement = document.getElementById(lockId + '-feedback');
-                if (feedbackElement) {
-                    feedbackElement.style.display = 'none';
-                }
-            }
-
-            // TextZoomControls komponenta s A11y podporou
-            createTextZoomControls(textZoomConfig, currentSize = 'medium') {
-                if (!textZoomConfig || !textZoomConfig.enabled) {
-                    return '';
-                }
-
-                const levels = textZoomConfig.levels || [
-                    { id: 'small', label: 'A', title: 'Malé písmo' },
-                    { id: 'medium', label: 'A+', title: 'Střední písmo' },
-                    { id: 'large', label: 'A++', title: 'Velké písmo' }
-                ];
-
-                const buttonsHtml = levels.map(level => 
-                    `<button class="text-zoom-btn ${level.id === currentSize ? 'active' : ''}" 
-                             onclick="game.setTextSize('${level.id}')" 
-                             title="${level.title}"
-                             aria-pressed="${level.id === currentSize}"
-                             aria-label="${level.title}">
-                        ${level.label}
-                        <span class="sr-only">${level.title}</span>
-                    </button>`
-                ).join('');
-
-                return `
-                    <div class="text-zoom-controls" role="group" aria-label="Ovládání velikosti textu">
-                        <span class="text-zoom-label">Velikost textu (klávesa Z):</span>
-                        ${buttonsHtml}
-                    </div>
-                `;
-            }
-
-            // InfoBubble komponenta
-            createInfoBubble(info, onContinue, ui = {}) {
-                const textZoomHtml = this.createTextZoomControls(ui.text_zoom, this.state.textSize);
-                const textSizeClass = `text-size-${this.state.textSize || 'medium'}`;
-
-                return `
-                    <div class="info-bubble max-w-2xl w-full">
-                        ${textZoomHtml}
-                        <div class="info-bubble-content ${textSizeClass}">
-                            <h2 class="info-bubble-title text-2xl">${info.title || 'Informace'}</h2>
-                            <div class="info-bubble-text">${info.description || info.text || ''}</div>
-                        </div>
-                        <div class="ui-actions">
-                            <button onclick="${onContinue}" class="ui-btn primary">
-                                ▶ Pokračovat
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }
-
-            // Nastavení velikosti textu s A11y podporou
-            setTextSize(size) {
-                this.state.textSize = size;
-                
-                // Aktualizace všech text-zoom tlačítek
-                document.querySelectorAll('.text-zoom-btn').forEach(btn => {
-                    btn.classList.remove('active');
-                    btn.setAttribute('aria-pressed', 'false');
-                });
-                
-                const activeBtn = document.querySelector(`[onclick="game.setTextSize('${size}')"]`);
-                if (activeBtn) {
-                    activeBtn.classList.add('active');
-                    activeBtn.setAttribute('aria-pressed', 'true');
-                }
-                
-                // Aktualizace obsahu
-                const content = document.querySelector('.info-bubble-content');
-                if (content) {
-                    content.className = `info-bubble-content text-size-${size}`;
-                }
-                
-                console.log(`Velikost textu změněna na: ${size}`);
-            }
-
-            // ProgressRail komponenta
-            createProgressRail(steps, currentId, solvedByStep) {
-                const railHtml = steps.map(step => {
-                    const baseClass = ['progress-step', `progress-step--${step.type || 'default'}`];
-                    let statusClass = 'pending';
-                    let stepContent = this.progressIconFor(step.type, String(step.order || '•'));
-
-                    if (solvedByStep.has(step.id)) {
-                        const solved = solvedByStep.get(step.id);
-                        statusClass = solved ? 'completed' : 'failed';
-                        stepContent = solved ? '✓' : '✗';
-                    } else if (step.id === currentId) {
-                        statusClass = 'current';
-                        stepContent = this.progressIconFor(step.type, String(step.order || '•'));
-                    }
-
-                    baseClass.push(statusClass);
-
-                    const label = this.escapeAttr(step.label || step.title || '');
-                    const title = this.escapeAttr(step.title || step.label || step.id);
-
-                    return `<div class="${baseClass.join(' ')}" data-label="${label}" title="${title}">${stepContent}</div>`;
-                }).join('');
-
-                return `<div class="progress-rail">${railHtml}</div>`;
-            }
-
-            // BackgroundCarousel komponenta
-            createBackgroundCarousel(images) {
-                console.log('🖼️ Vytváření BackgroundCarousel:', { images });
-                
-                if (!images || images.length === 0) {
-                    console.log('⚠️ Žádné obrázky pro carousel');
-                    return '<div class="background-carousel"></div>';
-                }
-                
-                const slidesHtml = images.map((img, index) => {
-                    console.log(`📸 Slide ${index}: ${img}`);
-                    return `<div class="background-slide ${index === 0 ? 'active' : ''}" 
-                                 style="background-image: url('${img}'); background-size: cover; background-position: center;"
-                                 data-image-url="${img}"></div>`;
-                }).join('');
-                
-                return `<div class="background-carousel">${slidesHtml}</div>`;
-            }
-
-            // Scene komponenta s vlastním obsahem
-            createSceneWithCustomContent(page, progressRailHtml, backgroundCarouselHtml, customContentHtml) {
-                return `
-                    <div class="scene-container">
-                        ${backgroundCarouselHtml}
-                        <div class="scene-overlay"></div>
-                        <div class="scene-content">
-                            <div class="scene-header">
-                                ${progressRailHtml}
-                            </div>
-                            <div class="scene-main">
-                                <div class="scene-main-inner">
-                                    ${customContentHtml}
-                                </div>
-                            </div>
-                            
-                            <div class="p-4 flex justify-between items-center bg-black bg-opacity-20">
-                                <div class="text-white text-sm">
-                                    Úniková hra Engine v${this.getEngineVersion()}
-                                </div>
-                                <div id="game-timer" class="text-white text-lg font-mono bg-black bg-opacity-50 px-3 py-1 rounded">
-                                    ${Math.floor(this.state.timeLeft / 60)}:${(this.state.timeLeft % 60).toString().padStart(2, '0')}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            // Scene komponenta - pouze pro fallback
-            createScene(page, progressRailHtml, backgroundCarouselHtml) {
-                const fallbackContent = `
-                    <div class="info-bubble max-w-2xl w-full">
-                        <h2 class="text-2xl font-bold mb-4 text-gray-800">${page.title || 'Stránka ' + page.id}</h2>
-                        <p class="text-gray-700 mb-4">${page.description || 'Popis stránky'}</p>
-                        
-                        <div class="ui-actions">
-                            <button onclick="game.handleContinue('${page.id}', this)" 
-                                    class="ui-btn primary">
-                                ▶ Pokračovat
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                return this.createSceneWithCustomContent(page, progressRailHtml, backgroundCarouselHtml, fallbackContent);
-            }
-
-
-
-            // Samostatná puzzle bublina s obrázkem a lupou
-            createPuzzleBubble(page) {
-                const imageUrl = page.ui?.puzzle_img || page.ui?.scene_img || page.background_imgs?.[0] || page.background_img;
-                if (!imageUrl) return '';
-
-                const magnifierConfig = page.ui?.magnifier || { enabled: true, lensSize: 140, zoomLevel: 2, resultSize: 180 };
-                const puzzleBodyId = 'puzzle-body-' + Date.now();
-                const imageId = 'puzzle-img-' + Date.now();
-
-                return `
-                    <div class="info-bubble max-w-4xl w-full puzzle-bubble">
-                        <div class="flex justify-between items-center mb-3">
-                            <h2 class="text-2xl font-bold text-gray-800">${page.ui?.puzzle_title || page.title || 'Scéna'}</h2>
-                            <div class="flex gap-2">
-                                <button onclick="game.toggleMagnifier('${imageId}', ${JSON.stringify(magnifierConfig).replace(/"/g, '&quot;')})" 
-                                        class="ui-btn secondary text-sm">
-                                    🔍 Lupa
-                                </button>
-                                <button onclick="game.toggleSection('${puzzleBodyId}')" 
-                                        class="ui-btn secondary text-sm">
-                                    👁️ Obrázek
-                                </button>
-                            </div>
-                        </div>
-                        <div id="${puzzleBodyId}" class="puzzle-body">
-                            <div class="magnifier-container">
-                                <img id="${imageId}" 
-                                     src="${imageUrl}" 
-                                     class="zoomable-scene-image magnifier-image" 
-                                     alt="Puzzle obrázek">
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            // Verze enginu
-            getEngineVersion() {
-                return "12.0 (A11y + QoL + Complete Escape Game Engine)";
-            }
-
-            // === GAMEPLAY LOOP SUMMARY ===
-            /*
-            Jak funguje úniková hra - kompletní gameplay loop:
-
-            1. NAČTENÍ SVĚTA:
-               - App stáhne JSON (meta, assets, pages) z URL
-               - Přednačte pozadí, připraví klávesnice a tvary podle assets
-               - Indexuje stránky pro rychlou navigaci
-
-            2. SCÉNA + PŘÍBĚH:
-               - Hráč vidí obrázek (případně karusel pozadí)
-               - V bublině je zadání, které si může zvětšit (Text Zoom - klávesa Z)
-               - Progress rail ukazuje pokrok hrou
-
-            3. HLEDÁNÍ INDICIÍ:
-               - Na scéně může jezdit LUPA (magnifier) – hledá detaily
-               - Najde čísla, tvary, barvy, šipky potřebné pro zámky
-
-            4. ZÁMEK:
-               - V dolním panelu se zobrazí příslušný typ zámku
-               - 7 typů: numeric, text, arrows, colors, shapes, cryptex, quiz
-               - Všechny mají sjednocené ovládání: velké sloty/vstup, kulatá klávesnice
-               - Klávesnice: Enter=Potvrdit, Backspace=mazat, 0-9 pro numeric
-               - U sekvencí vidí per-pozici "správně/špatně"
-
-            5. POSTUP:
-               - Po úspěchu onResolve(true) – app z JSON zjistí další krok
-               - Priorita: next_on_success → pořadí v pages → progress-rail
-               - Když chybí navigace, ukáže „Pokračovat →" (robustní flow)
-
-            6. ČAS:
-               - Timer běží (pokud meta.timer.enabled)
-               - Při warning_at vizuální varování
-               - Po vypršení skok na lose stránku
-
-            7. CÍL:
-               - Po sérii zámků dorazí na p-win (výhra)
-               - Konfety/efekty, statistiky, možnost hrát znovu
-               - Tím se uzavře příběh a děti mají odměnu
-
-            A11Y & QoL funkce:
-            - Klávesnice: Z=text zoom, Enter=submit, Backspace=delete
-            - ARIA: live regions, pressed states, labels
-            - Mobil: větší touch targety, optimalizace
-            - Reduced motion: vypnuté animace pro citlivé uživatele
-            - Screen reader: oznámení o odemčení zámků
-            */
-
-            // Odvození navigačních kroků z dat
-            deriveNavSteps(data) {
-                this.navSteps = data.pages.map(page => ({
-                    id: page.id,
-                    nextOnSuccess: page.next_on_success,
-                    nextOnFail: page.next_on_fail,
-                    index: this.pageIndex.get(page.id)?.index || 0
-                }));
-            }
-
-            // Najití následující stránky
-            nextFor(currentId, success = true) {
-                const pageInfo = this.pageIndex.get(currentId);
-                if (!pageInfo) return null;
-                
-                const page = pageInfo.page;
-                
-                if (success && page.next_on_success) {
-                    return page.next_on_success;
-                }
-                
-                if (!success && page.next_on_fail) {
-                    return page.next_on_fail;
-                }
-                
-                // Fallback na další stránku v pořadí
-                const nextIndex = pageInfo.index + 1;
-                if (nextIndex < this.normalizedData.pages.length) {
-                    return this.normalizedData.pages[nextIndex].id;
-                }
-                
-                return null;
-            }
-
-            // Bezpečný přechod na další stránku
-            safeNext(currentId, success = true) {
-                const nextId = this.nextFor(currentId, success);
-                if (nextId && this.pageIndex.has(nextId)) {
-                    return nextId;
-                }
-                return currentId; // Zůstaneme na aktuální stránce
-            }
-
-            // === DÁVKA 11: ROBUSTNÍ FLOW + NOUZOVĚ POKRAČOVAT ===
-
-            // Vylepšené vyřešení kroku/úkolu s robustním flow
-            onResolve(stepId, success = true) {
-                this.state.solvedByStep.set(stepId, success);
-                
-                const fromId = stepId || this.state.currentId;           // použij ten, který přišel
-                const nextId = this.safeNext(fromId, success);           // počítej z něj
-                
-                // Pokud je nextId stejné jako fromId, znamená to že nemáme kam jít
-                if (nextId === fromId && success) {
-                    // Zobrazíme nouzové tlačítko pro pokračování
-                    this.showEmergencyContinue(stepId);
-                } else {
-                    this.goto(nextId);
-                }
-                
-                console.log(`Krok ${stepId} vyřešen (${success ? 'úspěch' : 'neúspěch'}), přechod na ${nextId}`);
-            }
-
-            // Zobrazení nouzového tlačítka pro pokračování
-            showEmergencyContinue(stepId) {
-                const existingPanel = document.getElementById('emergency-continue-panel');
-                if (existingPanel) {
-                    existingPanel.remove();
-                }
-
-                const panel = document.createElement('div');
-                panel.id = 'emergency-continue-panel';
-                panel.className = 'fixed top-4 right-4 z-50 bg-green-500 text-white p-4 rounded-lg shadow-xl border-2 border-green-600';
-                panel.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="text-2xl">✅</div>
-                        <div>
-                            <div class="font-bold">Úkol splněn!</div>
-                            <div class="text-sm opacity-90">Krok ${stepId} byl úspěšně dokončen</div>
-                        </div>
-                        <button onclick="game.emergencyContinue()" 
-                                class="bg-white text-green-600 px-3 py-1 rounded font-semibold hover:bg-green-50 transition-colors">
-                            Pokračovat →
-                        </button>
-                    </div>
-                `;
-
-                document.body.appendChild(panel);
-
-                // Automatické skrytí po 10 sekundách
-                setTimeout(() => {
-                    if (panel.parentElement) {
-                        panel.remove();
-                    }
-                }, 10000);
-            }
-
-            // Nouzové pokračování na další stránku
-            emergencyContinue() {
-                const existingPanel = document.getElementById('emergency-continue-panel');
-                if (existingPanel) {
-                    existingPanel.remove();
-                }
-
-                // Pokus o přechod na další stránku v pořadí
-                const currentPageInfo = this.pageIndex.get(this.state.currentId);
-                if (currentPageInfo) {
-                    const nextIndex = currentPageInfo.index + 1;
-                    if (nextIndex < this.normalizedData.pages.length) {
-                        const nextPageId = this.normalizedData.pages[nextIndex].id;
-                        this.goto(nextPageId);
-                        console.log(`Nouzový přechod na stránku: ${nextPageId}`);
-                        return;
-                    }
-                }
-
-                // Pokud jsme na konci, zobrazíme zprávu o dokončení
-                this.showGameComplete();
-            }
-
-            // Obsluha tlačítka pokračovat s debounce
-            handleContinue(stepId, btn) {
-                if (btn) btn.disabled = true;
-                this.onResolve(stepId, true);
-            }
-
-            // Zobrazení zprávy o dokončení hry
-            showGameComplete() {
-                this.root.innerHTML = `
-                    <div class="text-center max-w-2xl">
-                        <div class="text-6xl mb-6">🎉</div>
-                        <h1 class="text-4xl font-bold text-white mb-4">Gratulujeme!</h1>
-                        <p class="text-xl text-white mb-8">Úspěšně jste dokončili únikovou hru!</p>
-                        
-                        <div class="info-bubble">
-                            <h2 class="text-2xl font-bold mb-4">Statistiky hry</h2>
-                            <div class="grid grid-cols-2 gap-4 text-center">
-                                <div>
-                                    <div class="text-3xl font-bold text-green-600">${this.countSolvedSteps()}</div>
-                                    <div class="text-sm text-gray-600">Vyřešených kroků</div>
-                                </div>
-                                <div>
-                                    <div class="text-3xl font-bold text-blue-600">${this.normalizedData.pages.length}</div>
-                                    <div class="text-sm text-gray-600">Celkem kroků</div>
-                                </div>
-                            </div>
-                            
-                            <div class="ui-actions mt-6">
-                                <button onclick="location.reload()" class="ui-btn primary">
-                                    🔄 Hrát znovu
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            // Počítání vyřešených kroků
-            countSolvedSteps() {
-                let count = 0;
-                for (const [stepId, solved] of this.state.solvedByStep) {
-                    if (solved) count++;
-                }
-                return count;
-            }
-
-            // Sestavení lineárního pořadí stránek od skutečného startu
-            buildLinearOrder(startId) {
-                const seen = new Set();
-                const ordered = [];
-                let id = startId;
-
-                // jdi po next_on_success, když není, po pořadí v pages
-                while (id && !seen.has(id) && this.pageIndex.has(id)) {
-                    ordered.push(id);
-                    seen.add(id);
-                    const info = this.pageIndex.get(id);
-                    const page = info.page;
-                    id = page.next_on_success
-                        || this.normalizedData.pages[info.index + 1]?.id
-                        || null;
-                }
-
-                // doplň zbylé stránky (kdyby ve flow nebyly)
-                for (const p of this.normalizedData.pages) {
-                    if (!seen.has(p.id)) ordered.push(p.id);
-                }
-                return ordered;
-            }
-
-            // Vylepšené bezpečné hledání další stránky
-            safeNext(currentId, success = true) {
-                const pageInfo = this.pageIndex.get(currentId);
-                if (!pageInfo) return currentId;
-                
-                const page = pageInfo.page;
-                
-                // Priorita 1: next_on_success/fail pokud existuje a je platné
-                if (success && page.next_on_success) {
-                    if (this.pageIndex.has(page.next_on_success)) {
-                        return page.next_on_success;
-                    }
-                    console.warn(`next_on_success "${page.next_on_success}" neexistuje, pokračuji v pořadí`);
-                }
-                
-                if (!success && page.next_on_fail) {
-                    if (this.pageIndex.has(page.next_on_fail)) {
-                        return page.next_on_fail;
-                    }
-                    console.warn(`next_on_fail "${page.next_on_fail}" neexistuje, pokračuji v pořadí`);
-                }
-                
-                // Priorita 2: Další stránka v pořadí pages
-                const nextIndex = pageInfo.index + 1;
-                if (nextIndex < this.normalizedData.pages.length) {
-                    return this.normalizedData.pages[nextIndex].id;
-                }
-                
-                // Priorita 3: Progress rail - hledáme první nevyřešený krok
-                for (const page of this.normalizedData.pages) {
-                    if (!this.state.solvedByStep.has(page.id) || !this.state.solvedByStep.get(page.id)) {
-                        return page.id;
-                    }
-                }
-                
-                // Pokud je vše vyřešeno, zůstaneme na aktuální stránce
-                return currentId;
-            }
-
-            // Přechod na konkrétní stránku
-            goto(pageId) {
-                if (!this.pageIndex.has(pageId)) {
-                    console.warn(`Stránka ${pageId} neexistuje`);
-                    return;
-                }
-
-                const targetInfo = this.pageIndex.get(pageId);
-                const targetPage = targetInfo?.page;
-
-                if (targetPage && (targetPage.type === 'win' || targetPage.type === 'lose')) {
-                    this.state.gameEnded = targetPage.type;
-                    this.stopTimer();
-                } else {
-                    this.state.gameEnded = null;
-                }
-
-                this.state.currentId = pageId;
-                this.renderCurrentPage();
-            }
-
-            // Inicializace a spuštění timeru
-            useGameTimer(timerCfg, loseId, gotoCallback) {
-                if (!timerCfg || !timerCfg.duration_seconds) return;
-
-                this.state.timeLeft = timerCfg.duration_seconds;
-                this.state.isRunning = true;
-
-                this.timerInterval = setInterval(() => {
-                    if (this.state.gameEnded) {
-                        this.stopTimer();
-                        return;
-                    }
-
-                    this.state.timeLeft = Math.max(0, this.state.timeLeft - 1);
-                    this.updateTimerDisplay();
-
-                    if (this.state.timeLeft <= 0) {
-                        this.stopTimer();
-                        if (!this.state.gameEnded && loseId) {
-                            gotoCallback(loseId);
-                        }
-                    }
-                }, 1000);
-
-                this.updateTimerDisplay();
-            }
-
-            // Zastavení timeru
-            stopTimer() {
-                if (this.timerInterval) {
-                    clearInterval(this.timerInterval);
-                    this.timerInterval = null;
-                }
-                this.state.isRunning = false;
-            }
-
-            // Aktualizace zobrazení timeru
-            updateTimerDisplay() {
-                const timerElement = document.getElementById('game-timer');
-                if (timerElement) {
-                    const minutes = Math.floor(this.state.timeLeft / 60);
-                    const seconds = this.state.timeLeft % 60;
-                    timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                    
-                    // Vizuální upozornění při nízkém čase
-                    if (this.state.timeLeft <= 30) {
-                        timerElement.className = timerElement.className.replace('text-white', 'text-red-400 animate-pulse');
-                    }
-                }
-            }
-
-            // Vykreslení aktuální stránky podle JSON dat
-            renderCurrentPage() {
-                const pageInfo = this.pageIndex.get(this.state.currentId);
-                if (!pageInfo) return;
-                
-                const page = pageInfo.page;
-                
-                // Sestavení kroků v lineárním pořadí
-                const startForOrder = (this.state.startId && this.pageIndex.has(this.state.startId))
-                    ? this.state.startId
-                    : (this.normalizedData.pages[0]?.id || page.id);
-
-                const orderedIds = this.buildLinearOrder(startForOrder);
-                const progressSteps = orderedIds
-                    .map((id, index) => {
-                        const info = this.pageIndex.get(id);
-                        if (!info) return null;
-
-                        const stepPage = info.page;
-                        return {
-                            id,
-                            title: stepPage.title,
-                            order: index + 1,
-                            type: stepPage.type || 'default',
-                            label: this.progressLabelFor(stepPage, index)
-                        };
-                    })
-                    .filter(Boolean);
-                
-                // Vytvoření komponent
-                const progressRailHtml = this.createProgressRail(progressSteps, this.state.currentId, this.state.solvedByStep);
-                const backgroundCarouselHtml = this.createBackgroundCarousel(page.background_imgs);
-                
-                console.log('Renderuji stránku:', { 
-                    pageId: page.id, 
-                    type: page.type, 
-                    background_imgs: page.background_imgs,
-                    background_img: page.background_img,
-                    lock: page.lock
-                });
-                
-                // Rozhodnutí o typu obsahu podle page.type z JSON
-                let contentHtml;
-                
-                if (page.type === 'story') {
-                    // InfoBubble pro story stránky s pozadím ze scény
-                    const storyBackground = backgroundCarouselHtml;
-                    const infoBubbleHtml = this.createInfoBubble(
-                        { title: page.title, description: page.description },
-                        `game.handleContinue('${page.id}', this)`,
-                        page.ui || {}
-                    );
-                    contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, storyBackground, infoBubbleHtml);
-                    
-                } else if (page.type === 'magnifier') {
-                    // Magnifier scéna s zoomovatelným obrázkem
-                    const imageUrl = page.background_imgs?.[0] || page.background_img;
-                    console.log('Magnifier stránka:', { imageUrl, page });
-                    
-                    // VYNUTIT prázdný background za scénou, ať je hádanka jen v bublině
-                    const emptyBackground = this.createBackgroundCarousel([]);
-                    
-                    if (imageUrl) {
-                        const magnifierConfig = page.ui?.magnifier || { enabled: true };
-                        const zoomableImageHtml = this.createZoomableSceneImage(imageUrl, magnifierConfig);
-                        
-                        const magnifierContentHtml = `
-                            <div class="info-bubble max-w-2xl w-full">
-                                <h2 class="text-2xl font-bold mb-4 text-gray-800">${page.title || '🔍 Hledání indicií'}</h2>
-                                <p class="text-gray-700 mb-4">${page.description || 'Pohybujte myší po obrázku pro zvětšení detailů'}</p>
-                                <div class="mb-4">
-                                    ${zoomableImageHtml}
-                                </div>
-                                <div class="ui-actions">
-                                    <button onclick="game.handleContinue('${page.id}', this)" class="ui-btn primary">
-                                        ▶ Pokračovat
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                        contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, emptyBackground, magnifierContentHtml);
-                    } else {
-                        // Fallback pokud není obrázek
-                        contentHtml = this.createScene(page, progressRailHtml, emptyBackground);
-                    }
-                    
-                } else if (page.type === 'lock' && page.lock) {
-                    // žádné celoobrazové pozadí – puzzle je v bublině
-                    const emptyBackground = this.createBackgroundCarousel([]);
-
-                    const puzzleHtml = this.createPuzzleBubble(page); // obrázek/hádanka
-                    const lockHtml   = this.createLockRouter(page.lock); // zámek
-
-                    const stacked = `
-                        <div class="content-stack">
-                            ${puzzleHtml}
-                            <div>${lockHtml}</div>
-                        </div>
-                    `;
-
-                    contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, emptyBackground, stacked);
-                    
-                } else if (page.type === 'win') {
-                    this.stopTimer();
-                    // Výherní stránka
-                    const winContentHtml = `
-                        <div class="info-bubble max-w-2xl w-full text-center">
-                            <div class="text-6xl mb-6">🎉</div>
-                            <h1 class="text-4xl font-bold text-green-600 mb-4">${page.title || 'Gratulujeme!'}</h1>
-                            <p class="text-xl text-gray-700 mb-8">${page.description || 'Úspěšně jste dokončili únikovou hru!'}</p>
-                            
-                            <div class="grid grid-cols-2 gap-4 text-center mb-6">
-                                <div>
-                                    <div class="text-3xl font-bold text-green-600">${this.countSolvedSteps()}</div>
-                                    <div class="text-sm text-gray-600">Vyřešených kroků</div>
-                                </div>
-                                <div>
-                                    <div class="text-3xl font-bold text-blue-600">${Math.floor(this.state.timeLeft / 60)}:${(this.state.timeLeft % 60).toString().padStart(2, '0')}</div>
-                                    <div class="text-sm text-gray-600">Zbývající čas</div>
-                                </div>
-                            </div>
-                            
-                            <div class="ui-actions">
-                                <button onclick="location.reload()" class="ui-btn primary">
-                                    🔄 Hrát znovu
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, backgroundCarouselHtml, winContentHtml);
-                    
-                } else if (page.type === 'lose') {
-                    this.stopTimer();
-                    // Proherní stránka
-                    const loseContentHtml = `
-                        <div class="info-bubble max-w-2xl w-full text-center">
-                            <div class="text-6xl mb-6">⏰</div>
-                            <h1 class="text-4xl font-bold text-red-600 mb-4">${page.title || 'Čas vypršel!'}</h1>
-                            <p class="text-xl text-gray-700 mb-8">${page.description || 'Bohužel se vám nepodařilo dokončit hru včas.'}</p>
-                            
-                            <div class="ui-actions">
-                                <button onclick="location.reload()" class="ui-btn primary">
-                                    🔄 Zkusit znovu
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                    contentHtml = this.createSceneWithCustomContent(page, progressRailHtml, backgroundCarouselHtml, loseContentHtml);
-                    
-                } else {
-                    // Standardní Scene pro neznámé typy
-                    contentHtml = this.createScene(page, progressRailHtml, backgroundCarouselHtml);
-                }
-                
-                this.root.innerHTML = contentHtml;
-                
-                // Spuštění carousel animace pokud má více obrázků
-                if (page.background_imgs && page.background_imgs.length > 1) {
-                    this.startBackgroundCarousel(page.background_imgs.length);
-                }
-            }
-
-            // Spuštění carousel animace
-            startBackgroundCarousel(imageCount) {
-                if (this.carouselInterval) {
-                    clearInterval(this.carouselInterval);
-                }
-                
-                let currentSlide = 0;
-                this.carouselInterval = setInterval(() => {
-                    const slides = document.querySelectorAll('.background-slide');
-                    if (slides.length <= 1) return;
-                    
-                    slides[currentSlide].classList.remove('active');
-                    currentSlide = (currentSlide + 1) % slides.length;
-                    slides[currentSlide].classList.add('active');
-                }, 5000); // Změna každých 5 sekund
-            }
-
-            // UI pro loading stav
-            showLoading(message) {
-                this.root.innerHTML = `
-                    <div class="text-center">
-                        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
-                        <p class="text-white text-lg">${message}</p>
-                    </div>
-                `;
-            }
-
-            // UI pro chybový stav
-            showError(message) {
-                this.root.innerHTML = `
-                    <div class="text-center max-w-md">
-                        <div class="text-red-400 text-6xl mb-4">⚠️</div>
-                        <h2 class="text-white text-xl font-semibold mb-2">Chyba</h2>
-                        <p class="text-red-200 mb-4">${message}</p>
-                        <button onclick="location.reload()" 
-                                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-medium">
-                            Zkusit znovu
-                        </button>
-                    </div>
-                `;
-            }
-
-            // Hlavní inicializační metoda
-            async initialize(gameUrl) {
-                try {
-                    // Vyčištění stavu z minulé session
-                    this.state.solvedByStep = new Map();
-                    this.state.gameEnded = null;
-                    this.state.timeLeft = 0;
-                    this.state.isRunning = false;
-                    
-                    // Dávka 1: Načtení a příprava dat
-                    const gameData = await this.fetchGame(gameUrl);
-                    const normalizedData = this.normalizeGame(gameData);
-                    this.indexPages(normalizedData);
-                    await this.preloadImages(normalizedData);
-                    
-                    // Dávka 2: Příprava navigace a timeru
-                    this.deriveNavSteps(normalizedData);
-                    
-                    // Start na intro stránce nebo meta.start_page
-                    const startId = normalizedData.meta?.start_page || "p-intro-1";
-                    this.state.startId = this.pageIndex.has(startId)
-                        ? startId
-                        : (normalizedData.pages[0]?.id || null);
-
-                    this.state.currentId = this.pageIndex.has(startId)
-                        ? startId
-                        : normalizedData.pages[0]?.id;
-                    
-                    // Timer jen pokud enabled a máme duration
-                    const t = normalizedData.meta.timer;
-                    if (t && t.enabled && t.duration_seconds > 0) {
-                        this.useGameTimer(t, t.lose_page, (loseId) => this.goto(loseId));
-                    }
-                    
-                    this.renderCurrentPage();
-                    console.log('Hra úspěšně inicializována!');
-                    
-                } catch (error) {
-                    console.error('Chyba při inicializaci:', error);
-                }
-            }
-        }
-
-        // Globální instance hry
-        const game = new EscapeGameEngine();
-
-        // Spuštění hry po načtení stránky
-        document.addEventListener('DOMContentLoaded', () => {
-            const gameUrl = 'https://raw.githubusercontent.com/vanekpa/canvaveskole/refs/heads/main/game1.json';
-            game.initialize(gameUrl);
-        });
-    </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'99121f2461f9b377',t:'MTc2MDg5NjI2Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
-</html>
+                <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9912b932f5bfbb9c',t:'MTc2MDkwMjU3Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
