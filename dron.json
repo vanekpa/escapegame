@@ -1,0 +1,289 @@
+{
+"meta": {
+  "game_id": "sample-escape-001",
+  "title": "🚁 Drony",
+  "version": "0.1.0",
+  "locale": "cs-CZ",
+  "start_page": "p-intro-1",
+  "_note": "Hra pro 1. stupeň - Drony 🚁",
+  "timer": {
+    "enabled": true,
+    "seconds": 1800,
+    "warning_at": 800,
+    "show": true,
+    "lose_page": "p-timeout"
+  },
+  "author": {
+    "name": "Patrik Vaněk",
+    "logo": "https://raw.githubusercontent.com/vanekpa/canvaveskole/refs/heads/main/eg_logo.png",
+    "url": "https://canvaveskole.com/",
+    "text": "CanvaVeŠkole.com",
+    "position": "bottom-left"
+        }
+    },
+
+  "assets": {
+    "colors": ["red","orange","yellow","green","blue","purple","pink","brown"],
+    "shapes": ["◯","■","▲","★","❤","◆"],
+    "shape_svgs": {
+    "◯": "<svg viewBox='0 0 80 80'><circle cx='40' cy='40' r='30' fill='#8BD3DD' stroke='#1E293B' stroke-width='6'/></svg>",
+    "■": "<svg viewBox='0 0 80 80'><rect x='12' y='12' width='56' height='56' rx='10' fill='#FBBF24' stroke='#1E293B' stroke-width='6'/></svg>",
+    "▲": "<svg viewBox='0 0 80 80'><polygon points='40,10 70,70 10,70' fill='#34D399' stroke='#1E293B' stroke-width='6'/></svg>",
+    "★": "<svg viewBox='0 0 80 80'><path d='M40 8l9 20 22 3-16 15 4 22-19-10-19 10 4-22L9 31l22-3z' fill='#A78BFA' stroke='#1E293B' stroke-width='6'/></svg>",
+    "❤": "<svg viewBox='0 0 80 80'><path d='M40 68C5 45 16 18 34 20c6 1 9 5 6 8 3-3 6-7 12-8 18-2 29 25-12 48z' fill='#FB7185' stroke='#1E293B' stroke-width='6'/></svg>",
+    "◆": "<svg viewBox='0 0 80 80'><polygon points='40,6 74,40 40,74 6,40' fill='#60A5FA' stroke='#1E293B' stroke-width='6'/></svg>"
+  },
+    "arrows": { "up": "U", "down": "D", "left": "L", "right": "R" },
+
+    "keyboards": {
+      "numeric": { "layout": "0123456789", "max_len": 6 },
+      "alpha": { "layout": "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "max_len": 12 },
+      "arrows": { "layout": ["↑","↓","←","→"], "max_len": 8 },
+      "colors": { "layout_ref": "colors", "max_len": 8 },
+      "shapes": { "layout_ref": "shapes", "max_len": 8 },
+      "cryptex": {
+        "_note": "Definice koleček kryptexu – každé kolečko má vlastní sadu znaků.",
+        "wheels": [
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        ]
+      }
+    }
+  },
+
+  "pages": [  
+    {
+      "id": "p-timeout",
+      "type": "info",
+      "info": {
+        "title": "⏰ Čas vypršel",
+        "text": "Nevadí! Zkus to znovu – zvládneš to.",
+        "badge": "story"
+      },
+      "ui": {
+        "icon": "lose",
+        "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/8.png"
+      },
+      "next_on_success": "p-intro-1"
+    },
+    {
+      "id": "p-intro-1",
+      "type": "info",
+      "info": {
+        "title": "🚁 Dron - 1",
+        "text": "🚁 Dron - 2",
+        "tips": ["🚁 Dron - 3"],
+        "badge": "story"
+      },
+      "ui": {
+        "icon": "story",
+        "background_img": "https://i.imgur.com/h1wC6F0.mp4",
+        "header_icons": ["i","123","abc","arrows","colors","shapes","cryptex","win"]
+      },
+      "next_on_success": "p-123-1",
+      "_note": "Info stránka nevyžaduje vstup – hra může rovnou zobrazit tlačítko Pokračovat."
+    },
+
+        {
+      "id": "p-123-1",
+      "type": "lock",
+      "lock": {
+        "mode": "numeric",
+        "input": { "keyboard": "numeric", "length": 5 },
+        "answer": "30981",
+        "attempts": 3,
+        "hint": "Na zahradě to vypadalo, jako by tu Adélka trénovala kouzla. Každá dýně svítila jiným světlem, netopýři kroužili nad hlavami a kočky se schovávaly pod keři."
+      },
+      "info": {
+        "title": "Číselný zámek",
+        "story": "Na zahradě to vypadalo, jako by tu Adélka trénovala kouzla. Každá dýně svítila jiným světlem, netopýři kroužili nad hlavami a kočky se schovávaly pod keři."
+      },
+      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/policie.png", "icon": "123" },
+      "next_on_success": "p-SHAPES-2",
+      "next_on_fail": "p-123-1"
+    },
+
+     {
+      "id": "p-SHAPES-2",
+      "type": "shapes",
+      "lock": {
+        "mode": "shapes",
+        "input": { "keyboard": "shapes", "length": 3 },
+        "answer": ["◯","★","▲"],
+        "attempts": 3,
+        "hint": "Kdo pozná, co mám dneska připraveno, zjistí, proč jsme se vlastně sešli. Děti si začaly všímat drobností kolem sebe… a pomalu jim začínalo docházet, jaké slovo Adélka skrývá."
+      },
+      "info": {
+        "title": "Horská služba",
+        "story": "Kdo pozná, co mám dneska připraveno, zjistí, proč jsme se vlastně sešli. Děti si začaly všímat drobností kolem sebe… a pomalu jim začínalo docházet, jaké slovo Adélka skrývá."
+      },
+      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/15.png", "icon": " " },
+      "next_on_success": "p-SHAPES-3",
+      "next_on_fail": "p-SHAPES-2"
+    },
+
+       {
+      "id": "p-SHAPES-3",
+      "type": "lock",
+      "lock": {
+        "mode": "shapes",
+        "input": { "keyboard": "shapes", "length": 6 },
+        "answer": ["★","◆","▲","■","◯","❤"],
+        "attempts": 2,
+        "hint": "V kuchyni stály řady lahviček s barevnými nápoji. „Každý má rád jinou příchuť,“ zasmála se Adélka, a říká: „Zlomek + barva v lektvaru. Název, který sedí ke tvaru.”"
+      },
+      "info": { "title": "", "story": "V kuchyni stály řady lahviček s barevnými nápoji. „Každý má rád jinou příchuť,“ zasmála se Adélka, a říká: „Zlomek + barva v lektvaru. Název, který sedí ke tvaru.”" },
+      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/3.png", "icon": "" },
+      "next_on_success": "p-ARROWS-4",
+      "next_on_fail": "p-SHAPES-3"
+    }, 
+
+
+    {
+      "id": "p-ARROWS-4",
+      "type": "lock",
+      "lock": {
+        "mode": "arrows",
+        "input": { "keyboard": "arrows", "length": 5, "show_buttons": true },
+        "answer": ["→","↓","→","→","↑"],
+        "attempts": 3,
+        "hint": "Najednou se z rohu ozvalo písknutí. Dvířka skříně se pootevřela a zevnitř vykoukli pavoučci. Pomůžete Adélce vymést je ven? Začňete pod kloboukem."
+      },
+      "info": {
+        "title": "",
+        "story": "Najednou se z rohu ozvalo písknutí. Dvířka skříně se pootevřela a zevnitř vykoukli pavoučci. Pomůžete Adélce vymést je ven? Začňete pod kloboukem."
+      },
+      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/4.png", "icon": "arrows" },
+      "next_on_success": "p-COLORS-5",
+      "next_on_fail": "p-ARROWS-4"
+    },
+
+    {
+      "id": "p-COLORS-5",
+      "type": "lock",
+      "lock": {
+        "mode": "colors",
+        "input": { "keyboard": "colors", "length": 5, "show_names": false },
+        "answer": ["green","red","orange","pink","blue"],
+        "attempts": 2,
+        "hint": "Z hudebního pokoje se ozvala veselá melodie. Podlaha se změnila v pestrobarevný parket, který jemně svítil pod každým krokem. „Každá barva má své kouzlo,“ mrkla Adélka."
+      },
+      "info": {
+        "title": "Barevný zámek",
+        "story": "Zadej pořadí barev, které vidíš."
+      },
+      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/5.png", "icon": "colors" },
+      "next_on_success": "p-QUIZ-6",
+      "next_on_fail": "p-COLORS-5"
+    },
+    {
+  "id": "p-QUIZ-6",
+  "type": "lock",
+  "lock": {
+  "mode": "quiz",
+  "draw": 3,
+  "min_ratio": 0.8,
+  "shuffle_on_retry": true,
+  "questions": [
+    {
+      "text": "Kdy se slaví Halloween?",
+      "answers": [
+        { "text": "30. října",   "correct": false },
+        { "text": "31. října",   "correct": true  },
+        { "text": "1. listopadu","correct": false }
+      ]
+    },
+    {
+      "text": "Jaký je tradiční anglický pozdrav koledníků?",
+      "answers": [
+        { "text": "Trick or treat!", "correct": true  },
+        { "text": "Happy haunting!", "correct": false },
+        { "text": "Boo or nothing!", "correct": false }
+      ]
+    },
+    {
+      "text": "Z čeho se tradičně vyřezává Jack-o'-lantern?",
+      "answers": [
+        { "text": "Z dýně",   "correct": true  },
+        { "text": "Z jablka", "correct": false },
+        { "text": "Z melounu","correct": false }
+      ]
+    }
+  ]
+},
+  "info": {
+    "title": "Mini kvíz 🎃",
+    "story": "Odemkni zámek — stačí mít aspoň 80 % správně."
+  },
+  "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/1.png", "icon": "lock" },
+  "next_on_success": "p-CRYPTEX-7",
+  "next_on_fail": "p-QUIZ-6"
+},
+
+    {
+      "id": "p-CRYPTEX-7",
+      "type": "lock",
+      "lock": {
+        "mode": "cryptex",
+        "input": { "wheels_ref": "cryptex", "length": 4 },
+        "answer": ["D","U","C","H"],
+        "attempts": 5,
+        "hint": "Splnili jste skoro všechny úkoly a zbývá už jen poslední, abyste se dostali do kouzelné truhličky."
+      },
+      "info": {
+        "title": "Kryptex",
+        "story": "Vyhledej si na internetu Morseovu abecedu."
+      },
+      "ui": {
+      "background_imgs": [
+        "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/6.png",
+        "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/7_v2.png"
+                        ],
+      "icon": "cryptex"
+    },
+      "next_on_success": "p-intro-2",
+      "next_on_fail": "p-CRYPTEX-7"
+    },
+
+    {
+     "id": "p-intro-2",
+      "type": "info",
+      "info": {
+        "title": "",
+        "text": "Kamarádi, zvládli jste to! Podařilo se Vám otevřít truhličku a zasloužíte si odměnu!",
+        "tips": ["Pokračujte dál a najděte paní učitelku, která se ukrývá někde na chodbě."],
+        "badge": "story"
+      },
+      "ui": {
+        "icon": "story",
+        "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/8.png",
+        "reveal_ms": 3500,
+        "darken": 0.0,
+        "full_bleed": true
+      },
+      "next_on_success": "p-win",
+      "_note": "Info stránka nevyžaduje vstup – hra může rovnou zobrazit tlačítko Pokračovat."
+    },
+
+    {
+      "id": "p-win",
+      "type": "info",
+      "info": {
+        "title": "Vyhráno! 🎉",
+        "text": "Všechny zámky jsou otevřené. Paráda!",
+        "reward": { "type": "badge", "label": "Master of Locks" }
+      },
+      "ui": {
+        "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/8.png",
+        "full_bleed": true,
+        "reveal_ms": 1500,
+        "darken": 0.0,
+        "fx": ["confetti","sparkle"],
+        "icon": "win"
+      },
+      "next_on_success": null
+    }
+  ]
+}
