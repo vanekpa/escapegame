@@ -79,7 +79,7 @@
       },
       "ui": {
         "icon": "story",
-        "background_img": "https://i.imgur.com/h1wC6F0.mp4",
+        "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/D1.png",
         "header_icons": ["i","123","abc","arrows","colors","shapes","cryptex","win"]
       },
       "next_on_success": "p-123-1",
