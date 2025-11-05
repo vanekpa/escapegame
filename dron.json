@@ -145,7 +145,7 @@
       },
       "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/H1.png", "icon": " " },
       "next_on_success": "p4",
-      "next_on_fail": "p2"
+      "next_on_fail": "p3"
     },
 
        {
