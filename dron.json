@@ -78,7 +78,7 @@
         "badge": "story"
       },
       "ui": {
-        "icon": "story",
+        "icon": " ",
         "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/D1.png",
         "header_icons": ["i","123","abc","arrows","colors","shapes","cryptex","win"]
       },
@@ -87,26 +87,26 @@
     },
 
         {
-      "id": "p-123-1",
+      "id": "p1",
       "type": "lock",
       "lock": {
-        "mode": "numeric",
-        "input": { "keyboard": "numeric", "length": 5 },
-        "answer": "30981",
+        "mode": "arrows",
+        "input": { "keyboard": "arrows", "length": 7, "show_buttons": true },
+        "answer": ["→","↑","↑","→","↑","↑","↑"],
         "attempts": 3,
-        "hint": "Na zahradě to vypadalo, jako by tu Adélka trénovala kouzla. Každá dýně svítila jiným světlem, netopýři kroužili nad hlavami a kočky se schovávaly pod keři."
+        "hint": "Policie společně s desítkou dobrovolníků hledá ztraceného chlapce v lese!"
       },
       "info": {
-        "title": "Číselný zámek",
-        "story": "Na zahradě to vypadalo, jako by tu Adélka trénovala kouzla. Každá dýně svítila jiným světlem, netopýři kroužili nad hlavami a kočky se schovávaly pod keři."
+        "title": "",
+        "story": "Na pomoc se vydáváš i ty s dronem, který má termokameru, dokážete chlapce najít?"
       },
-      "ui": { "background_img": "https://i.imgur.com/jNDcA9n.gif", "icon": "123" },
-      "next_on_success": "p-SHAPES-2",
-      "next_on_fail": "p-123-1"
+      "ui": { "background_img": "https://github.com/vanekpa/escapegame/blob/main/D2.png?raw=true", "icon": "arrows" },
+      "next_on_success": "p2",
+      "next_on_fail": "p1"
     },
 
      {
-      "id": "p-SHAPES-2",
+      "id": "p2",
       "type": "shapes",
       "lock": {
         "mode": "shapes",
