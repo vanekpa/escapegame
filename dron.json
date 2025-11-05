@@ -94,7 +94,7 @@
         "input": { "keyboard": "arrows", "length": 7, "show_buttons": true },
         "answer": ["→","↑","↑","→","↑","↑","↑"],
         "attempts": 3,
-        "hint": "Policie společně s desítkou dobrovolníků hledá ztraceného chlapce v lese!"
+        "hint": "Policie společně s desítkou dobrovolníků hledá ztraceného chlapce v lese! Na pomoc se vydáváš i ty s dronem, který má termokameru, dokážete chlapce najít?"
       },
       "info": {
         "title": "Naviguj drona do cíle!",
@@ -111,8 +111,26 @@
       "next_on_fail": "p1"
     },
 
-     {
+        {
       "id": "p2",
+      "type": "info",
+      "info": {
+        "title": "Výborně!",
+        "text": "Zvládli jste v pochozí síti navigovat drona až k chlapci! Díky Vám je zachráněn.",
+        "tips": [" "],
+        "badge": "story"
+      },
+      "ui": {
+        "icon": " ",
+        "background_img": "https://i.imgur.com/jNDcA9n.gif",
+        "header_icons": ["i","123","abc","arrows","colors","shapes","cryptex","win"]
+      },
+      "next_on_success": "p3",
+      "_note": "Info stránka nevyžaduje vstup – hra může rovnou zobrazit tlačítko Pokračovat."
+    },
+
+     {
+      "id": "p3",
       "type": "shapes",
       "lock": {
         "mode": "shapes",
@@ -126,8 +144,8 @@
         "story": "Kdo pozná, co mám dneska připraveno, zjistí, proč jsme se vlastně sešli. Děti si začaly všímat drobností kolem sebe… a pomalu jim začínalo docházet, jaké slovo Adélka skrývá."
       },
       "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/15.png", "icon": " " },
-      "next_on_success": "p-SHAPES-3",
-      "next_on_fail": "p-SHAPES-2"
+      "next_on_success": "p3",
+      "next_on_fail": "p2"
     },
 
        {
