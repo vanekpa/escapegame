@@ -164,9 +164,27 @@
       "next_on_fail": "p4"
     }, 
 
+     {
+      "id": "p5",
+      "type": "info",
+      "info": {
+        "title": "Výborně!",
+        "text": "Hasičům se podařilo dostat požár pod kontrolu! Skvělá práce!",
+        "tips": [" "],
+        "badge": "story"
+      },
+      "ui": {
+        "icon": "story",
+        "background_img": "https://i.imgur.com/MPwSFZ3.gif",
+        "header_icons": ["i","123","abc","arrows","colors","shapes","cryptex","win"]
+      },
+      "next_on_success": "p6",
+      "_note": "Info stránka nevyžaduje vstup – hra může rovnou zobrazit tlačítko Pokračovat."
+    },
+
 
     {
-      "id": "p5",
+      "id": "p6",
       "type": "lock",
       "lock": {
         "mode": "arrows",
@@ -180,8 +198,8 @@
         "story": "Najednou se z rohu ozvalo písknutí. Dvířka skříně se pootevřela a zevnitř vykoukli pavoučci. Pomůžete Adélce vymést je ven? Začňete pod kloboukem."
       },
       "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/4.png", "icon": "arrows" },
-      "next_on_success": "p-COLORS-5",
-      "next_on_fail": "p-ARROWS-4"
+      "next_on_success": "p7",
+      "next_on_fail": "p6"
     },
 
     {
