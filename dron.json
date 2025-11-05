@@ -121,7 +121,7 @@
         "badge": "story"
       },
       "ui": {
-        "icon": " ",
+        "icon": "story",
         "background_img": "https://i.imgur.com/jNDcA9n.gif",
         "header_icons": ["i","123","abc","arrows","colors","shapes","cryptex","win"]
       },
