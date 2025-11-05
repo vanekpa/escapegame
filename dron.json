@@ -131,42 +131,42 @@
 
      {
       "id": "p3",
-      "type": "shapes",
+      "type": "lock",
       "lock": {
-        "mode": "shapes",
-        "input": { "keyboard": "shapes", "length": 3 },
-        "answer": ["◯","★","▲"],
+        "mode": "numeric",
+        "input": { "keyboard": "numeric", "length": 3 },
+        "answer": "150",
         "attempts": 3,
-        "hint": "Kdo pozná, co mám dneska připraveno, zjistí, proč jsme se vlastně sešli. Děti si začaly všímat drobností kolem sebe… a pomalu jim začínalo docházet, jaké slovo Adélka skrývá."
+        "hint": "Za školou, do které chodí tvoji kamarádi vypukl požár. Máš výborný výhled a tak bereš do ruky telefon a voláš!"
       },
       "info": {
-        "title": "Horská služba",
-        "story": "Kdo pozná, co mám dneska připraveno, zjistí, proč jsme se vlastně sešli. Děti si začaly všímat drobností kolem sebe… a pomalu jim začínalo docházet, jaké slovo Adélka skrývá."
+        "title": "Je potřeba zavolat Hasiče!",
+        "story": ""
       },
-      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/15.png", "icon": " " },
-      "next_on_success": "p3",
+      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/H1.png", "icon": " " },
+      "next_on_success": "p4",
       "next_on_fail": "p2"
     },
 
        {
-      "id": "p-SHAPES-3",
+      "id": "p4",
       "type": "lock",
       "lock": {
-        "mode": "shapes",
-        "input": { "keyboard": "shapes", "length": 6 },
-        "answer": ["★","◆","▲","■","◯","❤"],
-        "attempts": 2,
-        "hint": "V kuchyni stály řady lahviček s barevnými nápoji. „Každý má rád jinou příchuť,“ zasmála se Adélka, a říká: „Zlomek + barva v lektvaru. Název, který sedí ke tvaru.”"
+        "mode": "colors",
+        "input": { "keyboard": "colors", "length": 4, "show_names": false },
+        "answer": ["red","blue","yellow","green"],
+        "attempts": 3,
+        "hint": "Super! Hasiči jsou na místě i s dronem, který dohlíží, aby se požár nerozšířil. Je potřeba na dálku spustit vodní hadice!"
       },
-      "info": { "title": "", "story": "V kuchyni stály řady lahviček s barevnými nápoji. „Každý má rád jinou příchuť,“ zasmála se Adélka, a říká: „Zlomek + barva v lektvaru. Název, který sedí ke tvaru.”" },
-      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/3.png", "icon": "" },
-      "next_on_success": "p-ARROWS-4",
-      "next_on_fail": "p-SHAPES-3"
+      "info": { "title": "", "story": " " },
+      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/H2.png", "icon": "" },
+      "next_on_success": "p5",
+      "next_on_fail": "p4"
     }, 
 
 
     {
-      "id": "p-ARROWS-4",
+      "id": "p5",
       "type": "lock",
       "lock": {
         "mode": "arrows",
