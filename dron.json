@@ -82,7 +82,7 @@
         "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/D1.png",
         "header_icons": ["i","123","abc","arrows","colors","shapes","cryptex","win"]
       },
-      "next_on_success": "p-123-1",
+      "next_on_success": "p1",
       "_note": "Info stránka nevyžaduje vstup – hra může rovnou zobrazit tlačítko Pokračovat."
     },
 
