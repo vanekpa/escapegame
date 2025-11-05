@@ -177,7 +177,7 @@
         "icon": "story",
         "background_img": "https://i.imgur.com/MPwSFZ3.gif",
         "reveal_ms": 3500,
-        "darken": 0,0,
+        "darken": 0.0,
         "full_bleed": true
       },
       "next_on_success": "p6",
