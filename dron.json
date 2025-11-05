@@ -97,10 +97,16 @@
         "hint": "Policie společně s desítkou dobrovolníků hledá ztraceného chlapce v lese!"
       },
       "info": {
-        "title": "",
+        "title": "Naviguj drona do cíle!",
         "story": "Na pomoc se vydáváš i ty s dronem, který má termokameru, dokážete chlapce najít?"
       },
-      "ui": { "background_img": "https://github.com/vanekpa/escapegame/blob/main/D2.png?raw=true", "icon": "arrows" },
+      "ui": {
+      "background_imgs":[ 
+        "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/D1.png",
+        "https://github.com/vanekpa/escapegame/blob/main/D2.png?raw=true"
+                        ],
+      "icon": "arrows"
+      },
       "next_on_success": "p2",
       "next_on_fail": "p1"
     },
