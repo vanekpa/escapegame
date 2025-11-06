@@ -190,6 +190,7 @@
     },
         {
       "id": "p6",
+          "type": "lock",
     "lock": {
         "mode": "cryptex",
         "input": { "wheels_ref": "cryptex", "length": 4 },
@@ -211,25 +212,7 @@
       "next_on_fail": "p6"
     },
     {
-      "id": "p-COLORS-5",
-      "type": "lock",
-      "lock": {
-        "mode": "colors",
-        "input": { "keyboard": "colors", "length": 5, "show_names": false },
-        "answer": ["green","red","orange","pink","blue"],
-        "attempts": 2,
-        "hint": "Z hudebního pokoje se ozvala veselá melodie. Podlaha se změnila v pestrobarevný parket, který jemně svítil pod každým krokem. „Každá barva má své kouzlo,“ mrkla Adélka."
-      },
-      "info": {
-        "title": "Barevný zámek",
-        "story": "Zadej pořadí barev, které vidíš."
-      },
-      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/5.png", "icon": "colors" },
-      "next_on_success": "p-QUIZ-6",
-      "next_on_fail": "p-COLORS-5"
-    },
-    {
-  "id": "p-QUIZ-6",
+  "id": "p7",
   "type": "lock",
   "lock": {
   "mode": "quiz",
@@ -268,34 +251,9 @@
     "story": "Odemkni zámek — stačí mít aspoň 80 % správně."
   },
   "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/1.png", "icon": "lock" },
-  "next_on_success": "p-CRYPTEX-7",
-  "next_on_fail": "p-QUIZ-6"
+  "next_on_success": "p8",
+  "next_on_fail": "p7"
 },
-
-    {
-      "id": "p-CRYPTEX-7",
-      "type": "lock",
-      "lock": {
-        "mode": "cryptex",
-        "input": { "wheels_ref": "cryptex", "length": 4 },
-        "answer": ["D","U","C","H"],
-        "attempts": 5,
-        "hint": "Splnili jste skoro všechny úkoly a zbývá už jen poslední, abyste se dostali do kouzelné truhličky."
-      },
-      "info": {
-        "title": "Kryptex",
-        "story": "Vyhledej si na internetu Morseovu abecedu."
-      },
-      "ui": {
-      "background_imgs": [
-        "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/6.png",
-        "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/7_v2.png"
-                        ],
-      "icon": "cryptex"
-    },
-      "next_on_success": "p-intro-2",
-      "next_on_fail": "p-CRYPTEX-7"
-    },
 
     {
      "id": "p-intro-2",
