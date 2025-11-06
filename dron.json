@@ -221,36 +221,44 @@
   "shuffle_on_retry": true,
   "questions": [
     {
-      "text": "Kdy se slaví Halloween?",
+      "text": "1",
       "answers": [
-        { "text": "30. října",   "correct": false },
-        { "text": "31. října",   "correct": true  },
-        { "text": "1. listopadu","correct": false }
+        { "text": "Špachtle",   "correct": false },
+        { "text": "Vrtule",   "correct": true  },
+        { "text": "Kvrdlačky","correct": false }
       ]
     },
     {
-      "text": "Jaký je tradiční anglický pozdrav koledníků?",
+      "text": "2",
       "answers": [
-        { "text": "Trick or treat!", "correct": true  },
-        { "text": "Happy haunting!", "correct": false },
-        { "text": "Boo or nothing!", "correct": false }
+        { "text": "HD Kamera", "correct": true  },
+        { "text": "Mikroskopická hlavice", "correct": false },
+        { "text": "Lupa", "correct": false }
       ]
     },
     {
-      "text": "Z čeho se tradičně vyřezává Jack-o'-lantern?",
+      "text": "3",
       "answers": [
-        { "text": "Z dýně",   "correct": true  },
-        { "text": "Z jablka", "correct": false },
-        { "text": "Z melounu","correct": false }
+        { "text": "Anténa",   "correct": true  },
+        { "text": "Vonná tyčinka", "correct": false },
+        { "text": "Signální baterie","correct": false }
+      ]
+    },
+    {
+      "text": "4",
+      "answers": [
+        { "text": "Rameno dronu",   "correct": true  },
+        { "text": "Kontaktní opěrka", "correct": false },
+        { "text": "Tyčová podpěrka","correct": false }
       ]
     }
   ]
 },
   "info": {
-    "title": "Mini kvíz 🎃",
-    "story": "Odemkni zámek — stačí mít aspoň 80 % správně."
+    "title": "Schéma dronu",
+    "story": "Přiřaď správně jednotlivé části dronu."
   },
-  "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/1.png", "icon": "lock" },
+  "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/Dron%20-%20sch%C3%A9ma.png", "icon": "lock" },
   "next_on_success": "p8",
   "next_on_fail": "p7"
 },
