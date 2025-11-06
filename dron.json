@@ -221,7 +221,7 @@
   "shuffle_on_retry": true,
   "questions": [
     {
-      "text": "1",
+      "text": "Co na schématu označuje č.1?",
       "answers": [
         { "text": "Špachtle",   "correct": false },
         { "text": "Vrtule",   "correct": true  },
@@ -229,7 +229,7 @@
       ]
     },
     {
-      "text": "2",
+      "text": "Co na schématu označuje č.2?",
       "answers": [
         { "text": "HD Kamera", "correct": true  },
         { "text": "Mikroskopická hlavice", "correct": false },
@@ -237,7 +237,7 @@
       ]
     },
     {
-      "text": "3",
+      "text": "Co na schématu označuje č.3?",
       "answers": [
         { "text": "Anténa",   "correct": true  },
         { "text": "Vonná tyčinka", "correct": false },
@@ -245,7 +245,7 @@
       ]
     },
     {
-      "text": "4",
+      "text": "Co na schématu označuje č.4?",
       "answers": [
         { "text": "Rameno dronu",   "correct": true  },
         { "text": "Kontaktní opěrka", "correct": false },
@@ -258,7 +258,7 @@
     "title": "Schéma dronu",
     "story": "Přiřaď správně jednotlivé části dronu."
   },
-  "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/SchmaDron.png", "icon": "lock" },
+  "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/schma_dron_v2.png", "icon": "lock" },
   "next_on_success": "p8",
   "next_on_fail": "p7"
 },
