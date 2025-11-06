@@ -188,27 +188,28 @@
       "next_on_success": "p6",
       "_note": "Info stránka nevyžaduje vstup – hra může rovnou zobrazit tlačítko Pokračovat."
     },
-
-
-    {
+        {
       "id": "p6",
-      "type": "lock",
-      "lock": {
-        "mode": "arrows",
-        "input": { "keyboard": "arrows", "length": 5, "show_buttons": true },
-        "answer": ["→","↓","→","→","↑"],
-        "attempts": 3,
-        "hint": "Najednou se z rohu ozvalo písknutí. Dvířka skříně se pootevřela a zevnitř vykoukli pavoučci. Pomůžete Adélce vymést je ven? Začňete pod kloboukem."
+    "lock": {
+        "mode": "cryptex",
+        "input": { "wheels_ref": "cryptex", "length": 4 },
+        "answer": ["C","3","D","3"],
+        "attempts": 5,
+        "hint": "Dron pomáhá na poli, kde seká traktor. Pomoz mu ohalit souřadnice, kde se nachází zvěř."
       },
       "info": {
-        "title": "",
-        "story": "Najednou se z rohu ozvalo písknutí. Dvířka skříně se pootevřela a zevnitř vykoukli pavoučci. Pomůžete Adélce vymést je ven? Začňete pod kloboukem."
+        "title": "Záchrana na poli!",
       },
-      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/4.png", "icon": "arrows" },
+      "ui": {
+      "background_imgs":[ 
+        "https://raw.githubusercontent.com/vanekpa/canvaveskole/refs/heads/main/Drony%20-%20HRA%20(2).png",
+        "https://raw.githubusercontent.com/vanekpa/canvaveskole/refs/heads/main/Drony%20-%20HRA%20(3).png"
+                        ],
+      "icon": " "
+      },
       "next_on_success": "p7",
       "next_on_fail": "p6"
     },
-
     {
       "id": "p-COLORS-5",
       "type": "lock",
