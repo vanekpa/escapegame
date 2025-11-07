@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "locale": "cs-CZ",
   "start_page": "p-intro-1",
-  "_note": "Hra pro 1. stupeň - Drony 🚁",
+  "_note": "Nebeská mise 🚁",
   "timer": {
     "enabled": true,
     "seconds": 1800,
@@ -72,8 +72,8 @@
       "id": "p-intro-1",
       "type": "info",
       "info": {
-        "title": "🚁 Dron - 1",
-        "text": "🚁 Dron - 2",
+        "title": "🚁 Drony - Nebeská mise",
+        "text": "Vítej v řídicím centru. Nad námi se otevírá nebe a čas běží! Zvládneš vyřešit všechny úkoly, které mohou pilota dronu potkat? Jdeme na to!",
         "tips": ["🚁 Dron - 3"],
         "badge": "story"
       },
