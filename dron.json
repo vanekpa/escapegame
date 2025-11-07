@@ -288,7 +288,7 @@
       "type": "info",
       "info": {
         "title": "Vyhráno! 🎉",
-        "text": "Všechny zámky jsou otevřené. Paráda!",
+        "text": "Všechny zámky jsou otevřené. Paráda! Pokračujte dál k trezoru a zadejte kód: 46513 a potvrďte (E)",
         "reward": { "type": "badge", "label": "Master of Locks" }
       },
       "ui": {
