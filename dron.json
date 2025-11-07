@@ -64,7 +64,7 @@
       },
       "ui": {
         "icon": "lose",
-        "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/8.png"
+        "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/loss.png"
       },
       "next_on_success": "p-intro-1"
     },
@@ -264,17 +264,17 @@
 },
 
     {
-     "id": "p-intro-2",
+     "id": "p8",
       "type": "info",
       "info": {
         "title": "",
-        "text": "Kamarádi, zvládli jste to! Podařilo se Vám otevřít truhličku a zasloužíte si odměnu!",
-        "tips": ["Pokračujte dál a najděte paní učitelku, která se ukrývá někde na chodbě."],
+        "text": "„Úspěšné přistání potvrzeno. Mise proběhla bez chyb a všechny úkoly jsou splněny. Tvůj let byl přesný, klidný a odpovědný – přesně tak, jak to má pilot mít. Gratulujeme!“",
+        "tips": ["Pokračujte dál k trezoru a zadejte kód: 46513 a potvrďte (E)"],
         "badge": "story"
       },
       "ui": {
         "icon": "story",
-        "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/8.png",
+        "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/winn.png",
         "reveal_ms": 3500,
         "darken": 0.0,
         "full_bleed": true
@@ -292,7 +292,7 @@
         "reward": { "type": "badge", "label": "Master of Locks" }
       },
       "ui": {
-        "background_img": "https://raw.githubusercontent.com/vanekpa/HalloweenGame/refs/heads/main/8.png",
+        "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/winn.png",
         "full_bleed": true,
         "reveal_ms": 1500,
         "darken": 0.0,
