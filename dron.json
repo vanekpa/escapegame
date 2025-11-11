@@ -235,7 +235,7 @@
   "type": "lock",
   "lock": {
   "mode": "quiz",
-  "draw": 4,
+  "draw": 8,
   "min_ratio": 1,
   "shuffle_on_retry": true,
   "questions": [
