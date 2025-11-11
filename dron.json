@@ -79,7 +79,7 @@
       },
       "ui": {
         "icon": " ",
-        "background_img": "https://i.imgur.com/Gby6hZ4.gif",
+        "background_imgs": ["https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/Drony%20-%20Nebeska%20mise.png", "https://i.imgur.com/Gby6hZ4.gif"],
         "reveal_ms": 6500,
         "darken": 0.0,
         "full_bleed": true,
