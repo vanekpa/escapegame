@@ -75,7 +75,7 @@
         "title": "🚁 Drony - Nebeská mise",
         "text": "Vítej v řídicím centru. Nad námi se otevírá nebe a čas běží! Zvládneš vyřešit všechny úkoly, které mohou pilota dronu potkat? Jdeme na to!",
         "tips": ["🚁 Dron - 3"],
-        "badge": "story"
+        "badge": " "
       },
       "ui": {
         "icon": " ",
@@ -108,7 +108,7 @@
         "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/D1.png",
         "https://github.com/vanekpa/escapegame/blob/main/D2.png?raw=true"
                         ],
-      "icon": "arrows"
+      "icon": ""
       },
       "next_on_success": "p2",
       "next_on_fail": "p1"
@@ -121,7 +121,7 @@
         "title": "Výborně!",
         "text": "Zvládli jste v pochozí síti navigovat drona až k chlapci! Díky Vám je zachráněn.",
         "tips": [" "],
-        "badge": "story"
+        "badge": " "
       },
       "ui": {
         "icon": "story",
@@ -179,7 +179,7 @@
         "badge": "story"
       },
       "ui": {
-        "icon": "story",
+        "icon": " ",
         "background_img": "https://i.imgur.com/MPwSFZ3.gif",
         "reveal_ms": 6500,
         "darken": 0.0,
@@ -218,10 +218,10 @@
         "title": "Výborně!",
         "text": "Díky správným souřadnicím se povedlo aktivovat senzory, které odhalily srnky a ty se po zaznění signálu daly na útěk.",
         "tips": [" "],
-        "badge": "story"
+        "badge": " "
       },
       "ui": {
-        "icon": "story",
+        "icon": " ",
         "background_img": "https://i.imgur.com/UdbVLZ6.mp4",
         "reveal_ms": 6500,
         "darken": 0.0,
@@ -332,7 +332,7 @@
         "hint": "Přesouváme se na závodiště! Ti nejlepší piloti zde pravidelně trénují, zvládneš se postavit na START a posbírat všechny tvary?"
       },
       "info": { "title": "", "story": "" },
-      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/zavod_dronu.png", "icon": "shapes" },
+      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/zavod_dronu.png", "icon": " " },
       "next_on_success": "p9",
       "next_on_fail": "p8"
     }, 
@@ -344,7 +344,7 @@
         "title": "",
         "text": "Úspěšné přistání potvrzeno. Mise proběhla bez chyb a všechny úkoly jsou splněny. Tvůj let byl přesný, klidný a odpovědný – přesně tak, jak to má pilot mít.",
         "tips": [""],
-        "badge": "story"
+        "badge": " "
       },
       "ui": {
         "icon": "story",
