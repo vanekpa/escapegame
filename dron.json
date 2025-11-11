@@ -321,9 +321,24 @@
   "next_on_success": "p8",
   "next_on_fail": "p7"
 },
+           {
+      "id": "p8",
+      "type": "lock",
+      "lock": {
+        "mode": "shapes",
+        "input": { "keyboard": "shapes", "length": 6 },
+        "answer": ["◆","❤","▲","★","◯","★"],
+        "attempts": 2,
+        "hint": "Přesouváme se na závodiště! Ti nejlepší piloti zde pravidelně trénují, zvládneš se postavit na START a posbírat všechny tvary?"
+      },
+      "info": { "title": "", "story": "" },
+      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/zavod_dronu.png", "icon": "shapes" },
+      "next_on_success": "p9",
+      "next_on_fail": "p8"
+    }, 
 
     {
-     "id": "p8",
+     "id": "p9",
       "type": "info",
       "info": {
         "title": "",
