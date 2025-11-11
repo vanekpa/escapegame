@@ -108,7 +108,7 @@
         "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/D1.png",
         "https://github.com/vanekpa/escapegame/blob/main/D2.png?raw=true"
                         ],
-      "icon": ""
+      "icon": " "
       },
       "next_on_success": "p2",
       "next_on_fail": "p1"
