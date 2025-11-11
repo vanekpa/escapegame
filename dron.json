@@ -208,8 +208,27 @@
                         ],
       "icon": " "
       },
-      "next_on_success": "p7",
+      "next_on_success": "p6i",
       "next_on_fail": "p6"
+    },
+       {
+      "id": "p6i",
+      "type": "info",
+      "info": {
+        "title": "Výborně!",
+        "text": "Díky správným souřadnicím se povedlo aktivovat senzory, které odhalily srnky a ty se po zaznění signálu daly na útěk.",
+        "tips": [" "],
+        "badge": "story"
+      },
+      "ui": {
+        "icon": "story",
+        "background_img": "https://i.imgur.com/UdbVLZ6.mp4",
+        "reveal_ms": 6500,
+        "darken": 0.0,
+        "full_bleed": true
+      },
+      "next_on_success": "p7",
+      "_note": "Info stránka nevyžaduje vstup – hra může rovnou zobrazit tlačítko Pokračovat."
     },
     {
   "id": "p7",
@@ -291,7 +310,7 @@
         { "text": "Bayblade disk", "correct": false },
         { "text": "Ozubené kolečko","correct": false }
       ]
-    },
+    }
   ]
 },
   "info": {
