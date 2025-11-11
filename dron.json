@@ -164,7 +164,7 @@
         "hint": "Super! Hasiči jsou na místě i s dronem, který dohlíží, aby se požár nerozšířil. Je potřeba na dálku spustit vodní hadice!"
       },
       "info": { "title": "", "story": " " },
-      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/H2.png", "icon": "" },
+      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/H2.png", "icon": " " },
       "next_on_success": "p5",
       "next_on_fail": "p4"
     }, 
