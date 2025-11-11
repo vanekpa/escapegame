@@ -2,14 +2,14 @@
 "meta": {
   "game_id": "sample-escape-001",
   "title": "🚁 Drony",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "locale": "cs-CZ",
   "start_page": "p-intro-1",
   "_note": "Nebeská mise 🚁",
   "timer": {
     "enabled": true,
-    "seconds": 1800,
-    "warning_at": 800,
+    "seconds": 1930,
+    "warning_at": 1000,
     "show": true,
     "lose_page": "p-timeout"
   },
@@ -251,7 +251,47 @@
         { "text": "Kontaktní opěrka", "correct": false },
         { "text": "Tyčová podpěrka","correct": false }
       ]
-    }
+    },
+        {
+      "text": "Co na schématu označuje č.5?",
+      "answers": [
+        { "text": "Tělo dronu",   "correct": true  },
+        { "text": "Bederní opěrka", "correct": false },
+        { "text": "Síťovina","correct": false }
+      ]
+    },
+        {
+      "text": "Co na schématu označuje č.6?",
+      "answers": [
+        { "text": "Senzory",   "correct": true  },
+        { "text": "Oči", "correct": false },
+        { "text": "Světýlka baterie","correct": false }
+      ]
+    },
+        {
+      "text": "Co na schématu označuje č.7?",
+      "answers": [
+        { "text": "Baterie",   "correct": true  },
+        { "text": "Nákladní prostor", "correct": false },
+        { "text": "Deodorant","correct": false }
+      ]
+    },
+        {
+      "text": "Co na schématu označuje č.8?",
+      "answers": [
+        { "text": "Přistávací nohy",   "correct": true  },
+        { "text": "Vrtáky", "correct": false },
+        { "text": "Detekční nádrž","correct": false }
+      ]
+    },
+        {
+      "text": "Co na schématu označuje č.9?",
+      "answers": [
+        { "text": "Motory",   "correct": true  },
+        { "text": "Bayblade disk", "correct": false },
+        { "text": "Ozubené kolečko","correct": false }
+      ]
+    },
   ]
 },
   "info": {
@@ -268,8 +308,8 @@
       "type": "info",
       "info": {
         "title": "",
-        "text": "„Úspěšné přistání potvrzeno. Mise proběhla bez chyb a všechny úkoly jsou splněny. Tvůj let byl přesný, klidný a odpovědný – přesně tak, jak to má pilot mít. Gratulujeme!  Pokračujte dál k trezoru a zadejte kód: 46513 a potvrďte (E)“",
-        "tips": ["Pokračujte dál k trezoru a zadejte kód: 46513 a potvrďte (E)"],
+        "text": "Úspěšné přistání potvrzeno. Mise proběhla bez chyb a všechny úkoly jsou splněny. Tvůj let byl přesný, klidný a odpovědný – přesně tak, jak to má pilot mít.",
+        "tips": [""],
         "badge": "story"
       },
       "ui": {
@@ -288,7 +328,7 @@
       "type": "info",
       "info": {
         "title": "Vyhráno! 🎉",
-        "text": "Všechny zámky jsou otevřené. Paráda! Pokračujte dál k trezoru a zadejte kód: 46513 a potvrďte (E)",
+        "text": "Všechny zámky jsou otevřené. Paráda!",
         "reward": { "type": "badge", "label": "Master of Locks" }
       },
       "ui": {
