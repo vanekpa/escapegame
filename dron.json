@@ -317,7 +317,7 @@
     "title": "Schéma dronu",
     "story": "Přiřaď správně jednotlivé části dronu."
   },
-  "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/schma_dron_v2.png", "icon": "lock" },
+  "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/Dron_final_schema.png", "icon": "lock" },
   "next_on_success": "p8",
   "next_on_fail": "p7"
 },
