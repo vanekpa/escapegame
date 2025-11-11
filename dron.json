@@ -179,7 +179,7 @@
         "badge": "story"
       },
       "ui": {
-        "icon": " ",
+        "icon": "story",
         "background_img": "https://i.imgur.com/MPwSFZ3.gif",
         "reveal_ms": 6500,
         "darken": 0.0,
@@ -221,7 +221,7 @@
         "badge": " "
       },
       "ui": {
-        "icon": " ",
+        "icon": "story",
         "background_img": "https://i.imgur.com/UdbVLZ6.mp4",
         "reveal_ms": 6500,
         "darken": 0.0,
