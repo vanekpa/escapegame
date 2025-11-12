@@ -235,7 +235,7 @@
   "type": "lock",
   "lock": {
   "mode": "quiz",
-  "draw": 9,
+  "draw": 8,
   "min_ratio": 1,
   "shuffle_on_retry": true,
   "questions": [
@@ -337,8 +337,26 @@
       "next_on_fail": "p8"
     }, 
 
+    "id": "p9",
+      "type": "lock",
+      "lock": {
+        "mode": "text",
+        "input": { "keyboard": "alpha", "case_sensitive": false, "placeholder": "Zadej správné slovo" },
+        "answer": "STUDIO SKY",
+        "attempts": 3,
+        "hint": "Drony používají také ve filmovém průmyslu, zařiď aby padla klapka natáčení mohlo pokračovat."
+      },
+      "info": {
+        "title": "Film",
+        "story": " "
+      },
+      "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/FILMDRON.png", "icon": "abc" },
+      "next_on_success": "p10",
+      "next_on_fail": "p9"
+    },
+
     {
-     "id": "p9",
+     "id": "p10",
       "type": "info",
       "info": {
         "title": "",
