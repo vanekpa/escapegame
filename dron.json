@@ -380,7 +380,7 @@
       "type": "lock",
       "lock": {
         "mode": "numeric",
-        "input": { "keyboard": "numeric", "length": 3 },
+        "input": { "keyboard": "numeric", "length": 4 },
         "answer": "1490",
         "attempts": 3,
         "hint": "Dron je potřeba vyslat do vysokohorské oblasti. Je to jediná šance, jak pomoci skupině, která zůstala uvězněná na skále."
