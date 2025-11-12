@@ -336,7 +336,7 @@
       "next_on_success": "p9",
       "next_on_fail": "p8"
     }, 
-
+    {
     "id": "p9",
       "type": "lock",
       "lock": {
