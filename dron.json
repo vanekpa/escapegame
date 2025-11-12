@@ -351,12 +351,71 @@
         "story": " "
       },
       "ui": { "background_img": "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/FILMDRON.png", "icon": "abc" },
-      "next_on_success": "p10",
+      "next_on_success": "p9i",
       "next_on_fail": "p9"
     },
 
+       {
+      "id": "p9i",
+      "type": "info",
+      "info": {
+        "title": "Výborně!",
+        "text": "Natáčení může pokračovat! Drony jsou díky svým rozšířením opravdu univerzální pomocníci.",
+        "tips": [" "],
+        "badge": " "
+      },
+      "ui": {
+        "icon": "story",
+        "background_img": "https://i.imgur.com/4gAE169.mp4",
+        "reveal_ms": 6500,
+        "darken": 0.0,
+        "full_bleed": true
+      },
+      "next_on_success": "p10",
+      "_note": "Info stránka nevyžaduje vstup – hra může rovnou zobrazit tlačítko Pokračovat."
+    },
+
+         {
+      "id": "p10",
+      "type": "lock",
+      "lock": {
+        "mode": "numeric",
+        "input": { "keyboard": "numeric", "length": 3 },
+        "answer": "1490",
+        "attempts": 3,
+        "hint": "Dron je potřeba vyslat do vysokohorské oblasti. Je to jediná šance, jak pomoci skupině, která zůstala uvězněná na skále."
+      },
+      "info": {
+        "title": "Horská služba do akce!",
+        "story": ""
+      },
+      "ui": { "background_imgs": ["https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/HORY1.png", "https://raw.githubusercontent.com/vanekpa/escapegame/refs/heads/main/HORY2.png"], "icon": " " },
+      "next_on_success": "p10i",
+      "next_on_fail": "p10"
+    },
+
+           {
+      "id": "p10i",
+      "type": "info",
+      "info": {
+        "title": "Výborně!",
+        "text": "Dron se dostal až na vrchol a jako pošťák doručil i přes něpříznivé podmínky velmi potřebnou zásilku!",
+        "tips": [" "],
+        "badge": " "
+      },
+      "ui": {
+        "icon": "story",
+        "background_img": "https://i.imgur.com/92VRVH9.mp4",
+        "reveal_ms": 6500,
+        "darken": 0.0,
+        "full_bleed": true
+      },
+      "next_on_success": "p11",
+      "_note": "Info stránka nevyžaduje vstup – hra může rovnou zobrazit tlačítko Pokračovat."
+    },
+
     {
-     "id": "p10",
+     "id": "p11",
       "type": "info",
       "info": {
         "title": "",
