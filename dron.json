@@ -196,7 +196,7 @@
         "input": { "wheels_ref": "cryptex", "length": 4 },
         "answer": ["C","3","D","3"],
         "attempts": 5,
-        "hint": "Dron pomáhá na poli, kde seká traktor. Pomoz mu ohalit souřadnice, kde se nachází zvěř."
+        "hint": "Dron pomáhá na poli, kde seká traktor. Pomoz mu odhalit souřadnice, kde se nachází zvěř."
       },
       "info": {
         "title": "Záchrana na poli!"
