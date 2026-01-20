@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Time Travel Wormhole</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            font-family: "Fredoka", system-ui, sans-serif;
+        }
+
+        body {
+            background: #020412;
+        }
+
+        wormhole-ride {
+            display: block;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <wormhole-ride
+        ring-count="28"
+        duration="4.8"
+        depth-step="34"
+        scale-step="0.03"
+        title="Time travel"
+        subtitle="Wormhole ride"
+    ></wormhole-ride>
+
+    <script type="module">
+        const template = document.createElement("template");
+
+        template.innerHTML = `
+          <style>
+            :host {
+              display: block;
+              min-height: 100vh;
+              background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.15), transparent 50%),
+                radial-gradient(circle at 80% 10%, rgba(217, 70, 239, 0.2), transparent 45%),
+                radial-gradient(circle at 50% 90%, rgba(34, 211, 238, 0.2), transparent 50%),
+                #020412;
+              color: rgba(255, 255, 255, 0.9);
+              font-family: "Fredoka", system-ui, sans-serif;
+            }
+
+            .scene {
+              position: relative;
+              height: 100vh;
+              display: grid;
+              place-items: center;
+              perspective: 900px;
+              overflow: hidden;
+            }
+
+            .stars {
+              position: absolute;
+              inset: -20%;
+              background-image: radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.9), transparent 50%),
+                radial-gradient(1px 1px at 70% 10%, rgba(255, 255, 255, 0.7), transparent 50%),
+                radial-gradient(1px 1px at 40% 80%, rgba(255, 255, 255, 0.6), transparent 50%),
+                radial-gradient(1px 1px at 85% 70%, rgba(255, 255, 255, 0.8), transparent 50%),
+                radial-gradient(1px 1px at 10% 60%, rgba(255, 255, 255, 0.5), transparent 50%);
+              opacity: 0.35;
+              animation: drift 18s linear infinite;
+            }
+
+            .wormhole {
+              position: relative;
+              width: min(78vmin, 520px);
+              height: min(78vmin, 520px);
+              transform-style: preserve-3d;
+            }
+
+            .wormhole::before {
+              content: "";
+              position: absolute;
+              inset: -12%;
+              border-radius: 50%;
+              background: conic-gradient(
+                from 0deg,
+                rgba(59, 130, 246, 0.15),
+                rgba(217, 70, 239, 0.45),
+                rgba(14, 165, 233, 0.2),
+                rgba(236, 72, 153, 0.5),
+                rgba(59, 130, 246, 0.15)
+              );
+              filter: blur(8px);
+              opacity: 0.75;
+              animation: spin 8s linear infinite;
+            }
+
+            .wormhole::after {
+              content: "";
+              position: absolute;
+              inset: 18%;
+              border-radius: 50%;
+              background: radial-gradient(circle, rgba(255, 255, 255, 0.35), rgba(59, 130, 246, 0.08), transparent 70%);
+              box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+              animation: pulse 3.5s ease-in-out infinite;
+            }
+
+            .ring {
+              position: absolute;
+              inset: 0;
+              border-radius: 50%;
+              border: 2px solid rgba(129, 140, 248, 0.4);
+              box-shadow: 0 0 18px rgba(59, 130, 246, 0.25);
+              transform-style: preserve-3d;
+              animation: travel var(--duration) linear infinite;
+              opacity: 0;
+            }
+
+            .ring.tint-1 {
+              border-color: rgba(236, 72, 153, 0.45);
+              box-shadow: 0 0 16px rgba(236, 72, 153, 0.4);
+            }
+
+            .ring.tint-2 {
+              border-color: rgba(34, 211, 238, 0.45);
+              box-shadow: 0 0 16px rgba(34, 211, 238, 0.4);
+            }
+
+            .ring.tint-3 {
+              border-color: rgba(59, 130, 246, 0.45);
+              box-shadow: 0 0 16px rgba(59, 130, 246, 0.4);
+            }
+
+            .ring.tint-4 {
+              border-color: rgba(129, 140, 248, 0.45);
+              box-shadow: 0 0 16px rgba(129, 140, 248, 0.4);
+            }
+
+            .caption {
+              margin-top: 2.5rem;
+              text-align: center;
+              text-transform: uppercase;
+              letter-spacing: 0.3em;
+              color: rgba(226, 232, 240, 0.85);
+            }
+
+            .caption span {
+              display: block;
+              font-size: clamp(0.75rem, 2vw, 0.95rem);
+              opacity: 0.7;
+            }
+
+            .caption strong {
+              display: block;
+              font-size: clamp(1.2rem, 3vw, 2rem);
+              font-weight: 700;
+              margin-top: 0.4rem;
+              letter-spacing: 0.15em;
+            }
+
+            .badge {
+              position: absolute;
+              top: 16px;
+              left: 16px;
+              padding: 8px 14px;
+              border-radius: 999px;
+              background: rgba(15, 23, 42, 0.75);
+              border: 1px solid rgba(148, 163, 184, 0.3);
+              font-size: 0.85rem;
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              z-index: 10;
+            }
+
+            .badge a {
+              color: #38bdf8;
+              text-decoration: none;
+            }
+
+            @keyframes travel {
+              0% {
+                transform: translateZ(420px) scale(0.15) rotate(0deg);
+                opacity: 0;
+              }
+              30% {
+                opacity: 0.8;
+              }
+              70% {
+                opacity: 0.45;
+              }
+              100% {
+                transform: translateZ(-520px) scale(1.4) rotate(110deg);
+                opacity: 0;
+              }
+            }
+
+            @keyframes spin {
+              to {
+                transform: rotate(360deg);
+              }
+            }
+
+            @keyframes pulse {
+              0%,
+              100% {
+                transform: scale(0.92);
+                opacity: 0.6;
+              }
+              50% {
+                transform: scale(1.06);
+                opacity: 1;
+              }
+            }
+
+            @keyframes drift {
+              from {
+                transform: translate3d(0, 0, 0);
+              }
+              to {
+                transform: translate3d(-6%, 8%, 0);
+              }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+              .stars,
+              .wormhole::before,
+              .wormhole::after,
+              .ring {
+                animation: none !important;
+              }
+            }
+          </style>
+          <main class="scene">
+            <div class="badge">
+              Web component · <a part="link" href="timetravel.html">HTML demo</a>
+            </div>
+            <div class="stars" aria-hidden="true"></div>
+            <div class="wormhole" aria-hidden="true"></div>
+            <div class="caption">
+              <span part="title"></span>
+              <strong part="subtitle"></strong>
+            </div>
+          </main>
+        `;
+
+        class WormholeRide extends HTMLElement {
+          static get observedAttributes() {
+            return ["ring-count", "duration", "depth-step", "scale-step", "title", "subtitle"];
+          }
+
+          constructor() {
+            super();
+            this.attachShadow({ mode: "open" });
+            this.shadowRoot.appendChild(template.content.cloneNode(true));
+          }
+
+          connectedCallback() {
+            this.render();
+          }
+
+          attributeChangedCallback() {
+            this.render();
+          }
+
+          render() {
+            const ringCount = Number(this.getAttribute("ring-count")) || 28;
+            const duration = Number(this.getAttribute("duration")) || 4.8;
+            const depthStep = Number(this.getAttribute("depth-step")) || 34;
+            const scaleStep = Number(this.getAttribute("scale-step")) || 0.03;
+            const title = this.getAttribute("title") || "Time travel";
+            const subtitle = this.getAttribute("subtitle") || "Wormhole ride";
+
+            const wormhole = this.shadowRoot.querySelector(".wormhole");
+            const titleEl = this.shadowRoot.querySelector("[part=title]");
+            const subtitleEl = this.shadowRoot.querySelector("[part=subtitle]");
+
+            titleEl.textContent = title;
+            subtitleEl.textContent = subtitle;
+
+            wormhole.style.setProperty("--duration", `${duration}s`);
+            wormhole.innerHTML = "";
+
+            for (let i = 0; i < ringCount; i += 1) {
+              const ring = document.createElement("div");
+              const tintIndex = (i % 4) + 1;
+              const delay = (i * duration) / ringCount;
+              const translateZ = 420 - i * depthStep;
+              const scale = 0.15 + i * scaleStep;
+              ring.className = `ring tint-${tintIndex}`;
+              ring.style.animationDelay = `${delay}s`;
+              ring.style.transform = `translateZ(${translateZ}px) scale(${scale})`;
+              wormhole.appendChild(ring);
+            }
+          }
+        }
+
+        customElements.define("wormhole-ride", WormholeRide);
+    </script>
+</body>
+</html>
